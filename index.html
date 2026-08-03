@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Umgezogen – 1. SC 1911 Heiligenstadt</title>
+<script>
+  // Springt pfadgleich auf die neue Adresse: /ToolsUebersicht/ landet wieder
+  // auf /ToolsUebersicht/, nicht auf der Startseite. Query und Anker gehen mit.
+  // Diese Datei liegt zweimal im Repo (index.html + 404.html) - GitHub Pages
+  // liefert 404.html fuer jeden Pfad aus, den es hier nicht gibt, also fuer alle
+  // alten Tool-Adressen. replace() statt href, damit der Zurueck-Knopf nicht in
+  // eine Endlosschleife laeuft.
+  (function () {
+    location.replace("https://sc1911heiligenstadt.github.io" + location.pathname + location.search + location.hash);
+  })();
+</script>
+<meta http-equiv="refresh" content="3; url=https://sc1911heiligenstadt.github.io/">
+<style>
+  body { font-family: system-ui, -apple-system, "Segoe UI", sans-serif; margin: 0;
+         min-height: 100vh; display: flex; align-items: center; justify-content: center;
+         background: #f4f6f8; color: #1f2933; padding: 24px; }
+  .karte { background: #fff; border-radius: 12px; padding: 32px; max-width: 520px;
+           box-shadow: 0 2px 16px rgba(0,0,0,.08); }
+  h1 { font-size: 20px; margin: 0 0 12px; }
+  p { line-height: 1.55; margin: 0 0 14px; }
+  a.btn { display: inline-block; background: #1f6feb; color: #fff; text-decoration: none;
+          padding: 10px 18px; border-radius: 8px; font-size: 14px; }
+  code { background: #eef1f4; padding: 2px 6px; border-radius: 4px; font-size: 13px; }
+</style>
+</head>
+<body>
+  <div class="karte">
+    <h1>Die Vereins-Tools sind umgezogen</h1>
+    <p>Du wirst automatisch weitergeleitet. Passiert nichts, geht es hier weiter:</p>
+    <p><a class="btn" href="https://sc1911heiligenstadt.github.io/">Zu den Vereins-Tools</a></p>
+    <p>Bitte aktualisiere dein Lesezeichen auf
+       <code>sc1911heiligenstadt.github.io</code> – die alte Adresse bleibt nur
+       als Weiterleitung bestehen.</p>
+  </div>
+</body>
+</html>
