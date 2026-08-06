@@ -1,19 +1,20 @@
-﻿# tecko1985.github.io
+# ↪️ Umgezogen
 
-Weiterleitung der alten Adresse auf die neue Adresse der Vereins-Tools.
+Weiterleitung der früheren Adresse auf das heutige Konto. Enthält keine App mehr — jeder Aufruf springt pfadgleich auf die neue Adresse.
 
-Der GitHub-Benutzer `Tecko1985` wurde am 03.08.2026 in `sc1911heiligenstadt`
-umbenannt. GitHub Pages leitet Seiten-Adressen **nicht** automatisch weiter --
-alte Lesezeichen, Startbildschirm-Symbole und Links in bereits versendeten
-E-Mails liefen dadurch ins Leere.
+**➡️ [Weiterleitung öffnen](https://tecko1985.github.io/)**
 
-Dieses Repo haelt den alten Namen als Organisation und springt pfadgleich weiter:
+## Seiten
 
-    tecko1985.github.io/ToolsUebersicht/  ->  sc1911heiligenstadt.github.io/ToolsUebersicht/
+| Seite | Wofür |
+|---|---|
+| [Weiterleitung](https://tecko1985.github.io/) | Springt auf die neue Adresse |
+| [Weiterleitung für Unterseiten](https://tecko1985.github.io/404.html) | Springt pfadgleich auf die neue Adresse |
 
-`404.html` ist dabei das eigentliche Arbeitspferd: GitHub Pages liefert es fuer
-jeden Pfad aus, den es hier nicht gibt -- also fuer saemtliche alten Tool-Adressen.
-`index.html` ist dieselbe Datei fuer die Startseite. Beide bitte gemeinsam aendern.
+## Technik
 
-Hier gehoert nichts anderes hinein. Die Tools selbst liegen unter
-`sc1911heiligenstadt`.
+Vanilla JavaScript ohne Build-Schritt — die Dateien werden so ausgeliefert, wie sie im Repo liegen.
+
+---
+
+Gehörte zum 1. SC 1911 Heiligenstadt. Die Werkzeuge stehen heute in der [Tools-Übersicht](https://sc1911heiligenstadt.github.io/ToolsUebersicht/).
