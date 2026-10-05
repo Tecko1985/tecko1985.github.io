@@ -6,17 +6,18 @@
 <meta name="robots" content="noindex">
 <title>Umgezogen – 1. SC 1911 Heiligenstadt</title>
 <script>
-  // Springt pfadgleich auf die neue Adresse: /ToolsUebersicht/ landet wieder
+  // Springt pfadgleich auf die neue Adresse (seit 05.10.2026 direkt auf
+  // sc1911.clubdach.de, nicht mehr ueber die github.io-Umleitung): /ToolsUebersicht/ landet wieder
   // auf /ToolsUebersicht/, nicht auf der Startseite. Query und Anker gehen mit.
   // Diese Datei liegt zweimal im Repo (index.html + 404.html) - GitHub Pages
   // liefert 404.html fuer jeden Pfad aus, den es hier nicht gibt, also fuer alle
   // alten Tool-Adressen. replace() statt href, damit der Zurueck-Knopf nicht in
   // eine Endlosschleife laeuft.
   (function () {
-    location.replace("https://sc1911heiligenstadt.github.io" + location.pathname + location.search + location.hash);
+    location.replace("https://sc1911.clubdach.de" + location.pathname + location.search + location.hash);
   })();
 </script>
-<meta http-equiv="refresh" content="3; url=https://sc1911heiligenstadt.github.io/">
+<meta http-equiv="refresh" content="3; url=https://sc1911.clubdach.de/">
 <style>
   body { font-family: system-ui, -apple-system, "Segoe UI", sans-serif; margin: 0;
          min-height: 100vh; display: flex; align-items: center; justify-content: center;
@@ -34,9 +35,9 @@
   <div class="karte">
     <h1>Die Vereins-Tools sind umgezogen</h1>
     <p>Du wirst automatisch weitergeleitet. Passiert nichts, geht es hier weiter:</p>
-    <p><a class="btn" href="https://sc1911heiligenstadt.github.io/">Zu den Vereins-Tools</a></p>
+    <p><a class="btn" href="https://sc1911.clubdach.de/">Zu den Vereins-Tools</a></p>
     <p>Bitte aktualisiere dein Lesezeichen auf
-       <code>sc1911heiligenstadt.github.io</code> – die alte Adresse bleibt nur
+       <code>sc1911.clubdach.de</code> – die alte Adresse bleibt nur
        als Weiterleitung bestehen.</p>
   </div>
 </body>
