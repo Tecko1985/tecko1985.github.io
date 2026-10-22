@@ -270,6 +270,142 @@
     ] }
   ];
 
+  // Jedes Haus hat eigene Fragen. Gryffindor nutzt die Fragen direkt in ORTE.
+  function F(q, a, info) { return { q: q, a: a, info: info }; }
+  var HAUSFRAGEN = {
+    slytherin: {
+      halle: [
+        F('Wer ist der Hausgeist von Slytherin?', ['Der Blutige Baron', 'Der Fast Kopflose Nick', 'Der Fette Mönch', 'Die Graue Dame'], 'Nick gehört zu Gryffindor, der Fette Mönch zu Hufflepuff, die Graue Dame zu Ravenclaw.'),
+        F('Wer ist Hauslehrer von Slytherin, als Harry nach Hogwarts kommt?', ['Professor Snape', 'Professor McGonagall', 'Professor Flitwick', 'Professor Sprout'], 'Snape unterrichtet in dieser Zeit Zaubertränke unten im Kerker.'),
+        F('Was schwebt beim Festessen über den Tischen?', ['Tausende Kerzen', 'Kürbislaternen', 'Eulen mit Briefen', 'Sterne aus Glas'], 'Die Kerzen schweben frei in der Luft – ganz ohne Halter.')
+      ],
+      astro: [
+        F('Harrys Pate ist nach dem hellsten Stern am Nachthimmel benannt. Wie heißt er?', ['Sirius Black', 'Remus Lupin', 'Regulus Black', 'Arthur Weasley'], 'In der Familie Black tragen viele Sternnamen: Sirius, Regulus, Bellatrix, Andromeda.'),
+        F('In welcher Prüfung am Ende des fünften Jahres zählt auch Astronomie?', ['In den ZAGs', 'In den UTZs', 'Im Trimagischen Turnier', 'Im Hauspokal'], 'ZAGs gibt es im fünften Jahr, UTZs im siebten.'),
+        F('Was passiert während der Astronomie-Prüfung im fünften Band?', ['Unten wird Hagrid von Umbridges Leuten angegriffen', 'Ein Drache landet auf dem Turm', 'Der Turm stürzt ein', 'Peeves stiehlt alle Teleskope'], 'Professor McGonagall will helfen und wird dabei von mehreren Schockzaubern getroffen.')
+      ],
+      see: [
+        F('Wo liegt der Gemeinschaftsraum von Slytherin?', ['Im Kerker, unter dem See', 'Oben in einem Turm', 'Neben der Küche', 'In einem Gewächshaus'], 'Durch die Fenster fällt grünliches Licht aus dem Seewasser.'),
+        F('Wen muss Harry bei der zweiten Aufgabe des Turniers aus dem See holen?', ['Ron', 'Hermine', 'Ginny', 'Cho Chang'], 'Er bringt zusätzlich Fleurs kleine Schwester Gabrielle mit nach oben.'),
+        F('Wer lebt im See und singt nur unter Wasser schön?', ['Die Wassermenschen', 'Die Kobolde', 'Die Hauselfen', 'Die Zentauren'], 'Über Wasser klingt ihr Lied nur wie lautes Kreischen.')
+      ],
+      wald: [
+        F('Welche Wesen sieht nur, wer schon einmal einen Menschen sterben sah?', ['Thestrale', 'Zentauren', 'Einhörner', 'Acromantulas'], 'Thestrale ziehen auch die Kutschen vom Bahnhof zum Schloss.'),
+        F('Wer muss im ersten Band zur Strafe mit Harry in den Wald?', ['Draco Malfoy', 'Vincent Crabbe', 'Gregory Goyle', 'Pansy Parkinson'], 'Mit dabei sind auch Hermine, Neville, Hagrid und Fang.'),
+        F('Wie heißt Hagrids Halbbruder, ein Riese, den er im Wald versteckt?', ['Grawp', 'Aragog', 'Firenze', 'Fridwulfa'], 'Fridwulfa ist der Name von Hagrids Mutter.')
+      ],
+      hagrid: [
+        F('Welches geflügelte Tier soll im dritten Band hingerichtet werden?', ['Seidenschnabel', 'Fang', 'Norbert', 'Fawkes'], 'Der Hippogreif hatte Draco Malfoy verletzt – nachdem der ihn beleidigt hatte.'),
+        F('Wie heißt der dreiköpfige Hund, den Hagrid an Dumbledore verleiht?', ['Fluffy', 'Fang', 'Zerberus', 'Norbert'], 'Fluffy bewacht im ersten Band die Falltür. Bei Musik schläft er ein.'),
+        F('Was gewinnt Hagrid im ersten Band beim Kartenspiel?', ['Ein Drachenei', 'Einen Hund', 'Ein Motorrad', 'Einen Zauberstab'], 'Der Fremde im Gasthaus wollte nur wissen, wie man an Fluffy vorbeikommt.')
+      ],
+      quidditch: [
+        F('Welche Besen schenkt Lucius Malfoy im zweiten Band dem Slytherin-Team?', ['Nimbus 2001', 'Feuerblitz', 'Nimbus 2000', 'Sauberwisch 11'], 'Dafür wird Draco Sucher der Mannschaft.'),
+        F('Wer spielt ab dem zweiten Band Sucher für Slytherin?', ['Draco Malfoy', 'Marcus Flint', 'Vincent Crabbe', 'Blaise Zabini'], 'Marcus Flint ist der Kapitän.'),
+        F('Wie heißen die Bälle, die Spieler vom Besen hauen sollen?', ['Klatscher', 'Quaffel', 'Schnatz', 'Treiber'], 'Die Treiber schlagen die Klatscher mit Keulen weg.')
+      ],
+      gewaechs: [
+        F('Welcher Schüler ist ein Ass in Kräuterkunde und wird später selbst Professor dafür?', ['Neville Longbottom', 'Draco Malfoy', 'Seamus Finnigan', 'Dean Thomas'], 'Neville übernimmt das Fach nach Professor Sprout.'),
+        F('Was macht die Peitschende Weide?', ['Sie schlägt mit ihren Ästen um sich', 'Sie singt bei Vollmond', 'Sie wandert über das Gelände', 'Sie verschluckt Besen'], 'Unter ihr beginnt ein Geheimgang zur Heulenden Hütte.'),
+        F('Wofür braucht man im zweiten Band den Alraunentrank?', ['Um versteinerte Schüler zu heilen', 'Als Liebestrank', 'Um unsichtbar zu werden', 'Um die Gestalt zu wechseln'], 'Die Schüler wurden vom Basilisken versteinert.')
+      ],
+      viadukt: [
+        F('Welches Wesen steigt im dritten Band in den Hogwarts-Express?', ['Ein Dementor', 'Ein Drache', 'Ein Troll', 'Ein Basilisk'], 'Professor Lupin vertreibt ihn und verteilt danach Schokolade.'),
+        F('Wer sucht im ersten Band im Zug nach seiner Kröte Trevor?', ['Neville', 'Ron', 'Seamus', 'Draco'], 'Hermine hilft ihm beim Suchen – so lernt Harry sie kennen.'),
+        F('Wo kommt der Hogwarts-Express an?', ['Im Bahnhof Hogsmeade', 'In der Winkelgasse', 'In Little Whinging', 'In Ottery St. Catchpole'], 'Little Whinging ist der Ort der Dursleys, Ottery St. Catchpole der der Weasleys.')
+      ]
+    },
+    ravenclaw: {
+      halle: [
+        F('Wer ist der Hausgeist von Ravenclaw?', ['Die Graue Dame', 'Der Blutige Baron', 'Der Fette Mönch', 'Der Fast Kopflose Nick'], 'Sie ist die Tochter von Rowena Ravenclaw.'),
+        F('Welche Farben hat Ravenclaw in den Büchern?', ['Blau und Bronze', 'Grün und Silber', 'Rot und Gold', 'Gelb und Schwarz'], 'In den Filmen ist es Blau und Silber.'),
+        F('Welches Tier ist auf dem Wappen von Ravenclaw?', ['Ein Adler', 'Ein Rabe', 'Eine Eule', 'Ein Löwe'], 'Trotz des Namens ist es kein Rabe.')
+      ],
+      astro: [
+        F('Wo liegt der Gemeinschaftsraum von Ravenclaw?', ['In einem Turm', 'Im Kerker', 'Neben der Küche', 'Unter dem See'], 'Von dort hat man einen weiten Blick über die Berge.'),
+        F('Wie kommt man in den Gemeinschaftsraum von Ravenclaw?', ['Man löst ein Rätsel des Türklopfers', 'Man sagt der Fetten Dame ein Passwort', 'Man klopft auf bestimmte Fässer', 'Man sagt einer Steinwand ein Passwort'], 'Ein Passwort gibt es nicht – man muss klug antworten.'),
+        F('Welcher Stern ist der hellste am Nachthimmel?', ['Sirius', 'Polaris', 'Wega', 'Beteigeuze'], 'Er gibt auch Harrys Paten den Namen.')
+      ],
+      see: [
+        F('Wie reisen die Schüler aus Durmstrang zum Turnier an?', ['Mit einem Schiff, das aus dem See auftaucht', 'In einer Kutsche mit fliegenden Pferden', 'Mit dem Hogwarts-Express', 'Auf Besen'], 'Die fliegende Kutsche gehört zu Beauxbatons.'),
+        F('Welche kleinen Wasserdämonen ziehen Schwimmer im See nach unten?', ['Grindelohs', 'Wichtel', 'Gnome', 'Doxys'], 'Professor Lupin zeigt einen davon im Unterricht.'),
+        F('Wer rettet Harry im dritten Band am See vor den Dementoren?', ['Harry selbst – mit einem Patronus', 'Dumbledore', 'Sirius Black', 'Professor Lupin'], 'Mit dem Zeitumkehrer ist er zweimal da und rettet sich selbst.')
+      ],
+      wald: [
+        F('Welche Farbe hat das Blut eines Einhorns?', ['Silber', 'Gold', 'Blau', 'Rot'], 'Harry sieht es im ersten Band im Mondlicht schimmern.'),
+        F('Wie heißen riesige Spinnen wie Aragog?', ['Acromantulas', 'Basilisken', 'Doxys', 'Bowtruckles'], 'Sie können sprechen und werden sehr groß.'),
+        F('Welcher Zentaur rettet Harry im ersten Band im Wald?', ['Firenze', 'Bane', 'Ronan', 'Magorian'], 'Bane ist darüber gar nicht froh.')
+      ],
+      hagrid: [
+        F('Was versteckt Hagrid in seinem rosa Regenschirm?', ['Die Teile seines zerbrochenen Zauberstabs', 'Einen Schnatz', 'Einen Kompass', 'Einen Brief von Dumbledore'], 'Offiziell darf er gar nicht zaubern.'),
+        F('Warum durfte Hagrid nicht weiter zaubern lernen?', ['Er wurde im dritten Jahr von der Schule geworfen', 'Er war zu groß für die Klassenräume', 'Er hat seinen Zauberstab verloren', 'Er wollte lieber Tiere pflegen'], 'Man gab ihm zu Unrecht die Schuld für die geöffnete Kammer des Schreckens.'),
+        F('Welches Gebäck backt Hagrid gern, auch wenn es steinhart ist?', ['Felsenkekse', 'Kürbistorte', 'Sirupkuchen', 'Schokofrösche'], 'Harry, Ron und Hermine tun oft nur so, als würden sie davon essen.')
+      ],
+      quidditch: [
+        F('Wer ist die Sucherin von Ravenclaw, in die Harry verliebt ist?', ['Cho Chang', 'Luna Lovegood', 'Padma Patil', 'Marietta Edgecombe'], 'Luna ist auch in Ravenclaw, spielt aber kein Quidditch.'),
+        F('Mit welchem Ball werfen die Jäger ihre Tore?', ['Mit dem Quaffel', 'Mit dem Klatscher', 'Mit dem Schnatz', 'Mit dem Kniesel'], 'Ein Kniesel ist kein Ball, sondern ein katzenähnliches Tier.'),
+        F('Wie viele Punkte zählt ein Tor mit dem Quaffel?', ['10', '5', '20', '150'], 'Durch einen der drei Ringe – dann gibt es zehn Punkte.')
+      ],
+      gewaechs: [
+        F('Was schenkt Professor Moody Neville im vierten Band?', ['Ein Buch über magische Wasserpflanzen', 'Ein Erinnermich', 'Eine Kröte', 'Einen Besen'], 'Darin steht etwas über Dianthuskraut.'),
+        F('Was tragen die Schüler, wenn sie Alraunen umtopfen?', ['Ohrenschützer', 'Taucherbrillen', 'Tarnumhänge', 'Gummistiefel aus Drachenhaut'], 'Der Schrei einer Alraune ist für Menschen gefährlich.'),
+        F('Nicht nur Pflanzen heilen. Was ist ein Bezoar?', ['Ein Stein aus dem Magen einer Ziege, der gegen viele Gifte hilft', 'Ein Kraut gegen Pickel', 'Ein giftiger Pilz', 'Ein Trank zum Schlafen'], 'Damit rettet Harry im sechsten Band Ron das Leben.')
+      ],
+      viadukt: [
+        F('Was hat Ron im ersten Band als Proviant für den Zug dabei?', ['Belegte Brote mit Corned Beef', 'Eine Pizza', 'Kürbissuppe', 'Gar nichts'], 'Ron mag sie nicht. Harry kauft dann Süßes für beide.'),
+        F('Welche Bohnen gibt es in wirklich jeder Geschmacksrichtung?', ['Bertie Botts Bohnen', 'Weasleys Wunderbohnen', 'Zonkos Zauberbohnen', 'Honigtopf-Bohnen'], 'Auch Geschmack nach Ohrenschmalz ist dabei.'),
+        F('Welcher Lehrer schläft im dritten Band im Zugabteil?', ['Professor Lupin', 'Professor Snape', 'Hagrid', 'Professor Moody'], 'Auf seinem Koffer steht sein Name: Prof. R. J. Lupin.')
+      ]
+    },
+    hufflepuff: {
+      halle: [
+        F('Wer ist der Hausgeist von Hufflepuff?', ['Der Fette Mönch', 'Die Graue Dame', 'Der Blutige Baron', 'Der Fast Kopflose Nick'], 'Er ist freundlich und verzeiht sogar Peeves.'),
+        F('Wer gewinnt am Ende des ersten Bandes den Hauspokal?', ['Gryffindor', 'Slytherin', 'Hufflepuff', 'Ravenclaw'], 'Dumbledore vergibt in letzter Minute noch Punkte.'),
+        F('Wer hat das Haus Hufflepuff gegründet?', ['Helga Hufflepuff', 'Rowena Ravenclaw', 'Godric Gryffindor', 'Salazar Slytherin'], 'Sie wollte alle aufnehmen, die fleißig und treu sind.')
+      ],
+      astro: [
+        F('Womit beobachtet man im Astronomieunterricht den Himmel?', ['Mit einem Teleskop', 'Mit einer Kristallkugel', 'Mit einem Spickoskop', 'Mit einem Denkarium'], 'Ein Spickoskop pfeift, wenn jemand in der Nähe nicht ehrlich ist.'),
+        F('Wann findet der Astronomieunterricht statt?', ['Mitten in der Nacht', 'Mittags', 'Vor dem Frühstück', 'Nur am Wochenende'], 'Am Tag sieht man die Sterne ja nicht.'),
+        F('Welcher Planet leuchtet laut den Zentauren im ersten Band besonders hell?', ['Mars', 'Venus', 'Jupiter', 'Saturn'], 'Für die Zentauren ist das ein Zeichen für Unruhe.')
+      ],
+      see: [
+        F('Womit fahren die älteren Schüler vom Bahnhof zum Schloss?', ['In Kutschen, die Thestrale ziehen', 'In Booten', 'Auf Besen', 'Auf Hippogreifen'], 'Die meisten glauben, die Kutschen fahren von selbst.'),
+        F('Mit welchem Zauber atmet Cedric im See unter Wasser?', ['Mit dem Kopfblasenzauber', 'Mit Dianthuskraut', 'Er verwandelt sich in einen Hai', 'Mit Vielsaft-Trank'], 'Fleur nutzt denselben Zauber. Krum verwandelt sich halb in einen Hai.'),
+        F('Was macht der Riesenkrake, als Dennis Creevey in den See fällt?', ['Er schiebt ihn zurück ins Boot', 'Er zieht ihn nach unten', 'Er spritzt Tinte auf ihn', 'Er schwimmt davon'], 'Der Krake ist eben friedlich.')
+      ],
+      wald: [
+        F('Welche geflügelten Pferde mit Fledermausflügeln leben im Wald?', ['Thestrale', 'Hippogreife', 'Abraxaner', 'Drachen'], 'Abraxaner sind die riesigen Pferde von Beauxbatons.'),
+        F('Was ist ein Bowtruckle?', ['Ein kleiner Baumwächter, der aussieht wie ein Zweig', 'Eine giftige Spinne', 'Ein sprechender Pilz', 'Eine Eulenart'], 'Bowtruckles leben in Bäumen, aus deren Holz man Zauberstäbe macht.'),
+        F('Wohin geht Harry im siebten Band allein, um sich Voldemort zu stellen?', ['In den Verbotenen Wald', 'Auf den Astronomieturm', 'In die Kammer des Schreckens', 'Nach Hogsmeade'], 'Unterwegs lässt er den Stein der Auferstehung im Wald fallen.')
+      ],
+      hagrid: [
+        F('Was bringt Hagrid Harry zum elften Geburtstag mit?', ['Einen Geburtstagskuchen', 'Einen Nimbus 2000', 'Einen Tarnumhang', 'Einen Zauberstab'], 'Auf dem Kuchen steht in grüner Zuckerschrift ein Glückwunsch.'),
+        F('Wer war Hagrids Mutter?', ['Eine Riesin', 'Eine Zentaurin', 'Eine Hauselfe', 'Eine Koboldin'], 'Darum ist Hagrid so groß.'),
+        F('Welche Tiere züchtet Hagrid im vierten Band, die Funken aus dem Hinterteil schießen?', ['Knallrümpfige Kröter', 'Feuerkrabben', 'Salamander', 'Babydrachen'], 'Die Schüler sind wenig begeistert – die Kröter beißen und stechen.')
+      ],
+      quidditch: [
+        F('Welchen Besen schenkt Sirius Harry im dritten Band?', ['Einen Feuerblitz', 'Einen Nimbus 2001', 'Einen Sauberwisch 7', 'Einen Komet 260'], 'Er kommt ohne Absender – darum wird er erst auf Flüche untersucht.'),
+        F('Wer ist im dritten Band Sucher und Kapitän von Hufflepuff?', ['Cedric Diggory', 'Ernie Macmillan', 'Zacharias Smith', 'Justin Finch-Fletchley'], 'Er fängt den Schnatz, als Harry vom Besen fällt.'),
+        F('Was passiert in diesem Spiel mit Harrys Nimbus 2000?', ['Er fliegt in die Peitschende Weide und wird zerschlagen', 'Er wird gestohlen', 'Er verbrennt', 'Er fällt in den See'], 'Harry stürzt, weil Dementoren auf das Spielfeld kommen.')
+      ],
+      gewaechs: [
+        F('Wer ist Hauslehrerin von Hufflepuff und unterrichtet Kräuterkunde?', ['Professor Sprout', 'Professor McGonagall', 'Professor Trelawney', 'Madam Hooch'], 'Madam Hooch gibt die Flugstunden.'),
+        F('Was spritzt Nevilles Kaktus Mimbulus mimbeltonia im Zug?', ['Stinksaft', 'Wasser', 'Funken', 'Honig'], 'Ausgerechnet, als Cho ins Abteil kommt.'),
+        F('Welcher Baum wächst über dem Geheimgang zur Heulenden Hütte?', ['Die Peitschende Weide', 'Eine Riesentanne', 'Ein Apfelbaum', 'Eine Trauerweide'], 'Wer einen Knoten am Stamm drückt, bringt sie zum Stillhalten.')
+      ],
+      viadukt: [
+        F('Welche Farbe hat die Lok des Hogwarts-Express?', ['Scharlachrot', 'Grün', 'Blau', 'Schwarz'], 'Eine rote Dampflok, die von London nach Norden fährt.'),
+        F('Wie kommt man auf Gleis 9 ¾?', ['Man läuft durch die Absperrung zwischen Gleis 9 und 10', 'Man sagt ein Passwort', 'Mit einem Portschlüssel', 'Mit Flohpulver'], 'Mrs Weasley erklärt es Harry am ersten Tag.'),
+        F('Was kauft Harry im ersten Band beim Süßigkeitenwagen?', ['Von allem etwas', 'Nur Schokofrösche', 'Gar nichts', 'Nur Butterbier'], 'Zum ersten Mal hat er eigenes Geld – und teilt alles mit Ron.')
+      ]
+    }
+  };
+  ORTE.forEach(function (o) {
+    var fr = { gryffindor: o.fragen };
+    Object.keys(HAUSFRAGEN).forEach(function (h) { fr[h] = HAUSFRAGEN[h][o.id]; });
+    o.fragen = fr;
+  });
+
   var FUNDE = [
     { id: 'schnatz', name: 'Goldener Schnatz', pos: [18.3, 1.6, 4.2], tipp: 'Er schwirrt hoch über dem Spielfeld herum.',
       frage: { q: 'Was bekommt Harry im siebten Band von Dumbledore vererbt?', a: ['Den Schnatz aus seinem ersten Quidditch-Spiel', 'Den Elderstab', 'Den Phönix Fawkes', 'Das Denkarium'], info: 'Im Schnatz ist etwas versteckt, das Harry erst ganz am Ende braucht.' } },
@@ -835,7 +971,7 @@
       blatt.querySelector('#d-ok').addEventListener('click', zu);
       return;
     }
-    var fr = o.fragen[s.beantwortet];
+    var fr = o.fragen[stand.haus][s.beantwortet];
     frageZeigen('Ort ' + nr + ' · ' + o.name, 'Frage ' + (s.beantwortet + 1) + ' von 3', fr, '', PKT_FRAGE, function (ok) {
       s.beantwortet++;
       if (ok) { s.richtig++; stand.punkte += PKT_FRAGE; }
@@ -922,7 +1058,7 @@
         wappen(h) + esc(h.name) + '<small>' + esc(h.tier) + ' · ' + esc(h.zug) + '</small></button>';
     }).join('');
     dialog('<div class="ober">Willkommen in Hogwarts</div><h2 id="blatt-titel">Für welches Haus spielst du?</h2>' +
-      '<p>Acht Orte, drei Fragen pro Ort. Jede richtige Antwort bringt 10 Hauspunkte. ' +
+      '<p>Acht Orte, drei Fragen pro Ort – und jedes Haus bekommt eigene Fragen. Jede richtige Antwort bringt 10 Hauspunkte. ' +
       'Wer eines der fünf versteckten Dinge im Modell findet, bekommt 5 Punkte und eine Bonusfrage.</p>' +
       '<div class="haeuser">' + reihen + '</div>' +
       '<button type="button" class="knopf hut-knopf" id="d-hut">Lass den Sprechenden Hut entscheiden</button>', false);
