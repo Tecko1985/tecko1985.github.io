@@ -10,6 +10,7 @@ Weiterleitung der früheren Vereinsadresse auf das heutige Konto. Dieses Repo en
 |---|---|
 | [Weiterleitung](https://tecko1985.github.io/) | Springt auf die neue Adresse |
 | [Weiterleitung für Unterseiten](https://tecko1985.github.io/404.html) | Springt pfadgleich auf die neue Adresse |
+| [Hogwarts-Rundgang](https://tecko1985.github.io/hogwarts-quiz/) | Kleines Harry-Potter-Quiz mit Suchbild – ein Spaßprojekt, kein Vereins-Werkzeug |
 
 Beide Dateien haben denselben Inhalt, und das mit Absicht: GitHub Pages liefert
 `404.html` für jeden Pfad aus, den es hier nicht gibt — also für alle alten

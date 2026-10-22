@@ -1,0 +1,953 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Hogwarts-Rundgang</title>
+<meta name="description" content="Ein kleines Harry-Potter-Quiz rund um ein Hogwarts-Modell aus Klemmbausteinen: acht Orte, drei Fragen pro Ort und fünf versteckte Dinge.">
+<meta name="theme-color" content="#0d1024">
+<style>
+  :root {
+    --nacht: #0d1024;
+    --nacht-2: #171b3a;
+    --gold: #e6c372;
+    --gold-hell: #f7e3a6;
+    --pergament: #f3e6c4;
+    --pergament-2: #e6d3a3;
+    --tinte: #3a2a17;
+    --tinte-2: #6b5435;
+    --richtig: #2f7d4a;
+    --falsch: #a33a2e;
+    --haus: #6b5a8e;
+    --haus-akzent: #e6c372;
+    --haus-text: #fff;
+  }
+  * { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    margin: 0; min-height: 100vh; color: #ece6d6;
+    font-family: "Palatino Linotype", "Book Antiqua", Palatino, Georgia, "Times New Roman", serif;
+    background:
+      radial-gradient(1px 1px at 12% 18%, #fff8 50%, transparent 51%),
+      radial-gradient(1px 1px at 28% 8%, #fff9 50%, transparent 51%),
+      radial-gradient(1.5px 1.5px at 44% 22%, #fffa 50%, transparent 51%),
+      radial-gradient(1px 1px at 63% 12%, #fff8 50%, transparent 51%),
+      radial-gradient(1.5px 1.5px at 78% 26%, #fff9 50%, transparent 51%),
+      radial-gradient(1px 1px at 90% 9%, #fff8 50%, transparent 51%),
+      radial-gradient(1px 1px at 6% 40%, #fff6 50%, transparent 51%),
+      radial-gradient(1px 1px at 95% 44%, #fff6 50%, transparent 51%),
+      radial-gradient(circle at 86% 7%, #fff7d6 0 26px, #fff7d633 27px, transparent 70px),
+      linear-gradient(#0a0c1d, #171b3a 55%, #241a2e);
+    background-attachment: fixed;
+  }
+  .wrap { max-width: 1120px; margin: 0 auto; padding: 18px 16px 40px; }
+  h1, h2, h3 { font-weight: normal; letter-spacing: .04em; }
+  h1 { font-size: clamp(24px, 4.4vw, 38px); margin: 4px 0 2px; color: var(--gold-hell); text-shadow: 0 0 18px #e6c37255; }
+  .unter { margin: 0 0 14px; color: #c9c2b0; font-style: italic; }
+
+  /* Kopfleiste */
+  .leiste { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 12px; }
+  .pille { display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; border-radius: 999px;
+           background: #ffffff10; border: 1px solid #ffffff22; font-size: 15px; }
+  .pille b { color: var(--gold-hell); font-weight: normal; font-size: 17px; }
+  .pille.haus { background: var(--haus); color: var(--haus-text); border-color: var(--haus-akzent); }
+  .leiste .platz { flex: 1; }
+  .knopf { font: inherit; font-size: 15px; cursor: pointer; border-radius: 10px; padding: 8px 14px;
+           border: 1px solid var(--gold); background: transparent; color: var(--gold-hell); }
+  .knopf:hover, .knopf:focus-visible { background: #e6c3721f; }
+  .knopf.voll { background: var(--gold); color: #2a1d0b; }
+  .knopf.voll:hover { background: var(--gold-hell); }
+
+  /* Karte */
+  .karte { position: relative; border-radius: 18px; background: radial-gradient(ellipse at 50% 60%, #2a2f55 0%, #12152c 70%);
+           border: 1px solid #ffffff1a; box-shadow: 0 20px 60px #0008 inset, 0 6px 30px #0006; overflow: hidden; }
+  .karte-scroll { scrollbar-color: #e6c37266 transparent; overflow-x: auto; overflow-y: hidden; -webkit-overflow-scrolling: touch; }
+  #map { display: block; width: 100%; height: auto; }
+  .karte-hinweis { position: absolute; left: 12px; bottom: 10px; font-size: 13px; color: #cfc8b4; opacity: .85; pointer-events: none; }
+  @media (max-width: 760px) {
+    #map { width: 780px; }
+    .karte-hinweis { position: static; display: block; padding: 6px 12px 10px; }
+  }
+
+  #map polygon, #map path.kante { stroke: #0000003d; stroke-width: .7; stroke-linejoin: round; }
+  #map .win { fill: #2a2733; transition: fill .8s; }
+  #map .lit .win, #map.alle .win { fill: #ffd56b; filter: url(#glow); }
+  #map .glass { transition: fill .8s; }
+  #map .lit .glass, #map.alle .glass { fill: #ffe39a9c; }
+  #map .ring { transition: stroke .8s; }
+  #map .lit .ring, #map.alle .ring { stroke: #ffe08a; filter: url(#glow); }
+  #map .rauch { animation: rauch 4s ease-in infinite; opacity: 0; }
+  #map .rauch:nth-child(2) { animation-delay: 1.3s; }
+  #map .rauch:nth-child(3) { animation-delay: 2.6s; }
+  @keyframes rauch { 0% { opacity: .0; transform: translate(0,0) scale(.6); } 20% { opacity: .5; }
+                     100% { opacity: 0; transform: translate(8px,-26px) scale(1.6); } }
+
+  .marker { cursor: pointer; outline: none; }
+  .marker .puls { fill: none; stroke: var(--gold); stroke-width: 2; transform-box: fill-box; transform-origin: center;
+                  animation: puls 2.2s ease-out infinite; }
+  .marker .kreis { fill: #14112acc; stroke: var(--gold); stroke-width: 2; transition: fill .4s; }
+  .marker text { fill: var(--gold-hell); font-size: 15px; text-anchor: middle; dominant-baseline: central; pointer-events: none; }
+  .marker:hover .kreis, .marker:focus-visible .kreis { fill: #3a2f66; }
+  .marker:focus-visible .kreis { stroke: #fff; stroke-width: 3; }
+  .marker.fertig .puls { display: none; }
+  .marker.fertig .kreis { fill: var(--haus); stroke: var(--haus-akzent); }
+  .marker.fertig text { fill: var(--haus-text); }
+  @keyframes puls { 0% { transform: scale(1); opacity: .9; } 100% { transform: scale(2.1); opacity: 0; } }
+  .treffer { cursor: pointer; fill: transparent; }
+  .funken circle { animation: funke 1.1s ease-out forwards; transform-box: fill-box; transform-origin: center; }
+  @keyframes funke { 0% { opacity: 1; transform: translate(0,0) scale(1); } 100% { opacity: 0; transform: translate(var(--dx), var(--dy)) scale(.3); } }
+  .gefunden-ring { fill: none; stroke: #ffe08a; stroke-width: 2; stroke-dasharray: 4 4; filter: url(#glow); }
+
+  /* Listen unter der Karte */
+  .unten { display: grid; grid-template-columns: 1.4fr 1fr; gap: 16px; margin-top: 16px; }
+  @media (max-width: 760px) { .unten { grid-template-columns: 1fr; } }
+  .feld { background: #ffffff0c; border: 1px solid #ffffff1c; border-radius: 14px; padding: 14px; }
+  .feld h2 { font-size: 19px; margin: 0 0 10px; color: var(--gold-hell); }
+  .orte { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 8px; }
+  .ort { display: flex; align-items: center; gap: 10px; width: 100%; text-align: left; font: inherit; font-size: 15px;
+         color: #ece6d6; background: #ffffff0d; border: 1px solid #ffffff22; border-radius: 10px; padding: 9px 10px; cursor: pointer; }
+  .ort:hover, .ort:focus-visible { border-color: var(--gold); }
+  .ort .nr { flex: none; width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center;
+             border: 1.5px solid var(--gold); color: var(--gold-hell); font-size: 14px; }
+  .ort .stand { margin-left: auto; font-size: 13px; color: #bdb59f; }
+  .ort.fertig .nr { background: var(--haus); border-color: var(--haus-akzent); color: var(--haus-text); }
+  .funde { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+  .funde li { display: flex; align-items: center; gap: 8px; font-size: 15px; }
+  .funde .haken { flex: none; width: 22px; height: 22px; border-radius: 6px; border: 1.5px solid #ffffff44; display: grid; place-items: center; font-size: 14px; }
+  .funde li.ja .haken { background: var(--gold); border-color: var(--gold); color: #2a1d0b; }
+  .funde li.ja .name { color: var(--gold-hell); }
+  .funde .tipp-knopf { margin-left: auto; font: inherit; font-size: 13px; background: none; border: 0; color: #c9c2b0; text-decoration: underline; cursor: pointer; padding: 4px; }
+  .funde .tipp { flex-basis: 100%; margin: -2px 0 4px 30px; font-size: 14px; font-style: italic; color: #d9d1bb; }
+  .funde li { flex-wrap: wrap; }
+  .fuss { margin-top: 22px; font-size: 13px; color: #9a937f; line-height: 1.5; }
+
+  /* Dialog */
+  .schleier { position: fixed; inset: 0; background: #05061099; backdrop-filter: blur(3px); -webkit-backdrop-filter: blur(3px);
+              display: grid; place-items: center; padding: 16px; z-index: 10; }
+  .schleier[hidden] { display: none; }
+  .blatt { width: min(560px, 100%); max-height: calc(100vh - 32px); overflow-y: auto; overflow-x: hidden; color: var(--tinte);
+           background: radial-gradient(ellipse at 30% 20%, #fbf3dc, var(--pergament) 45%, var(--pergament-2));
+           border-radius: 14px; padding: 22px 22px 18px; box-shadow: 0 20px 60px #000a, 0 0 0 1px #c9a96a inset, 0 0 0 6px #f3e6c4, 0 0 0 7px #b8935a;
+           animation: auf .25s ease-out; }
+  @keyframes auf { from { transform: translateY(10px) scale(.98); opacity: 0; } to { transform: none; opacity: 1; } }
+  .blatt h2 { margin: 0 0 4px; font-size: 24px; color: #4a2f12; }
+  .blatt .ober { font-size: 13px; text-transform: uppercase; letter-spacing: .12em; color: var(--tinte-2); margin-bottom: 6px; }
+  .blatt .frage { font-size: 19px; line-height: 1.4; margin: 12px 0 14px; }
+  .antworten { display: grid; gap: 8px; }
+  .antwort { font: inherit; font-size: 16px; text-align: left; cursor: pointer; padding: 11px 14px; border-radius: 10px;
+             border: 1.5px solid #b8935a; background: #fffaf0; color: var(--tinte); }
+  .antwort:hover:not(:disabled), .antwort:focus-visible { background: #fff3d6; border-color: #8a6430; }
+  .antwort:disabled { cursor: default; }
+  .antwort.richtig { background: #dff1e2; border-color: var(--richtig); color: #163d23; }
+  .antwort.falsch { background: #f6dcd8; border-color: var(--falsch); color: #5a1911; }
+  .rueck { margin: 14px 0 0; padding: 10px 12px; border-radius: 10px; background: #ffffff8c; font-size: 15px; line-height: 1.45; }
+  .rueck b { display: block; margin-bottom: 2px; }
+  .rueck.ok b { color: var(--richtig); }
+  .rueck.nein b { color: var(--falsch); }
+  .blatt .zeile { display: flex; gap: 10px; justify-content: flex-end; align-items: center; margin-top: 16px; flex-wrap: wrap; }
+  .blatt .zeile .links { margin-right: auto; font-size: 14px; color: var(--tinte-2); }
+  .blatt .knopf { border-color: #8a6430; color: #4a2f12; }
+  .blatt .knopf:hover, .blatt .knopf:focus-visible { background: #8a643018; }
+  .blatt .knopf.voll { background: #6b4a1f; color: #fbf3dc; border-color: #6b4a1f; }
+  .blatt .knopf.voll:hover { background: #4a2f12; }
+
+  /* Start: Häuser */
+  .haeuser { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 14px 0 10px; }
+  .haus-wahl { font: inherit; cursor: pointer; border-radius: 12px; padding: 14px 10px; text-align: center; font-size: 17px;
+               border: 2px solid transparent; color: #fff; box-shadow: 0 2px 8px #0003; }
+  .haus-wahl small { display: block; font-size: 13px; opacity: .85; margin-top: 2px; }
+  .haus-wahl:hover, .haus-wahl:focus-visible { transform: translateY(-1px); border-color: #fff; outline: none; }
+  .hut-knopf { width: 100%; }
+  .wappen { width: 34px; height: 40px; display: block; margin: 0 auto 6px; }
+
+  /* Urkunde */
+  .urkunde { text-align: center; }
+  .urkunde .note { font-size: 54px; line-height: 1; margin: 10px 0 2px; color: #6b4a1f; }
+  .urkunde .note-text { font-size: 20px; margin-bottom: 8px; }
+  .urkunde .siegel { width: 74px; height: 74px; margin: 6px auto 0; border-radius: 50%; display: grid; place-items: center;
+                     background: radial-gradient(circle at 35% 30%, #d0574a, #8e2018 70%); color: #f7e3a6; font-size: 30px;
+                     box-shadow: 0 3px 8px #0005, 0 0 0 4px #8e201855; }
+  .urkunde p { line-height: 1.5; }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation: none !important; transition: none !important; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Hogwarts – der Schloss-Rundgang</h1>
+  <p class="unter">Klick auf die leuchtenden Orte und beantworte die Fragen. Im Modell sind außerdem fünf Dinge versteckt.</p>
+
+  <div class="leiste" aria-live="polite">
+    <span class="pille haus" id="p-haus">Haus: –</span>
+    <span class="pille">Hauspunkte <b id="p-punkte">0</b></span>
+    <span class="pille">Orte <b id="p-orte">0/8</b></span>
+    <span class="pille">Fundstücke <b id="p-funde">0/5</b></span>
+    <span class="platz"></span>
+    <button class="knopf" id="k-neu" type="button">Neu starten</button>
+  </div>
+
+  <div class="karte">
+    <div class="karte-scroll" id="scroll">
+      <svg id="map" viewBox="60 8 880 604" role="img" aria-label="Hogwarts-Modell aus Klemmbausteinen mit acht Orten zum Anklicken"></svg>
+    </div>
+    <span class="karte-hinweis">Tipp: Die kleinen Dinge sind gut versteckt. Genau hinschauen!</span>
+  </div>
+
+  <div class="unten">
+    <section class="feld">
+      <h2>Die acht Orte</h2>
+      <div class="orte" id="orte"></div>
+    </section>
+    <section class="feld">
+      <h2>Suchbild: Finde diese fünf Dinge</h2>
+      <ul class="funde" id="funde"></ul>
+    </section>
+  </div>
+
+  <p class="fuss">Ein Fan-Quiz zum Spaß – nicht offiziell. Harry Potter und alle Namen daraus gehören J. K. Rowling und Warner Bros.
+    Das Schloss ist selbst gezeichnet. Die Seite lädt nichts nach und speichert nichts.</p>
+</div>
+
+<div class="schleier" id="schleier" hidden>
+  <div class="blatt" id="blatt" role="dialog" aria-modal="true" aria-labelledby="blatt-titel"></div>
+</div>
+
+<noscript><p style="text-align:center;color:#fff">Für das Quiz muss JavaScript an sein.</p></noscript>
+
+<script>
+(function () {
+  'use strict';
+
+  /* ---------- Inhalte ---------- */
+  var HAEUSER = {
+    gryffindor: { name: 'Gryffindor', farbe: '#9c1c1c', akzent: '#e3b23c', text: '#fff', tier: 'Löwe', zug: 'Mut' },
+    slytherin:  { name: 'Slytherin',  farbe: '#1f5e3a', akzent: '#c0c6cc', text: '#fff', tier: 'Schlange', zug: 'Ehrgeiz' },
+    ravenclaw:  { name: 'Ravenclaw',  farbe: '#1f3a7a', akzent: '#c08d5c', text: '#fff', tier: 'Adler', zug: 'Klugheit' },
+    hufflepuff: { name: 'Hufflepuff', farbe: '#e0b52f', akzent: '#2a2a2a', text: '#2a2a2a', tier: 'Dachs', zug: 'Treue' }
+  };
+
+  var ORTE = [
+    { id: 'halle', name: 'Große Halle', pos: [9.3, 10, 5.4], fragen: [
+      { q: 'Was zeigt die verzauberte Decke der Großen Halle?', a: ['Den Himmel, wie er gerade draußen aussieht', 'Die Sternbilder deines Geburtstags', 'Bilder der früheren Schulleiter', 'Die Karte des Rumtreibers'], info: 'Die Decke ist so verzaubert, dass sie aussieht wie der Himmel über dem Schloss.' },
+      { q: 'Wer entscheidet beim Festessen, in welches Haus die Erstklässler kommen?', a: ['Der Sprechende Hut', 'Professor Dumbledore', 'Professor McGonagall', 'Der Fast Kopflose Nick'], info: 'Der Hut wird jedem Erstklässler aufgesetzt und ruft dann das Haus aus.' },
+      { q: 'Wie viele lange Haustische stehen in der Großen Halle – ohne den Lehrertisch?', a: ['Vier', 'Drei', 'Fünf', 'Sieben'], info: 'Ein Tisch für jedes Haus: Gryffindor, Hufflepuff, Ravenclaw und Slytherin.' }
+    ] },
+    { id: 'astro', name: 'Astronomieturm', pos: [13.1, 7.4, 11.8], fragen: [
+      { q: 'Was machen die Schüler im Astronomieunterricht oben auf dem Turm?', a: ['Sie beobachten nachts Sterne und Planeten', 'Sie üben das Fliegen auf Besen', 'Sie brauen Zaubertränke', 'Sie füttern die Eulen'], info: 'Astronomie findet nachts statt – mit Teleskopen ganz oben im höchsten Turm.' },
+      { q: 'Wer unterrichtet in Hogwarts Astronomie?', a: ['Professor Sinistra', 'Professor Trelawney', 'Professor Flitwick', 'Professor Binns'], info: 'Professor Aurora Sinistra. Trelawney unterrichtet Wahrsagen, Binns Geschichte der Zauberei.' },
+      { q: 'Wen schmuggeln Harry und Hermine im ersten Band nachts auf den höchsten Turm?', a: ['Den Babydrachen Norbert', 'Den Hippogreif Seidenschnabel', 'Die Ratte Krätze', 'Den Phönix Fawkes'], info: 'Hagrids Drache Norbert wird dort von Freunden von Charlie Weasley abgeholt.' }
+    ] },
+    { id: 'see', name: 'Schwarzer See', pos: [3.4, 17.4, 0.3], fragen: [
+      { q: 'Wie kommen die Erstklässler zum ersten Mal zum Schloss?', a: ['In kleinen Booten über den See', 'Mit dem Hogwarts-Express bis ans Tor', 'Auf Besen', 'In Kutschen ohne Pferde'], info: 'Hagrid führt die Erstklässler zu den Booten. Die älteren Schüler fahren in den Kutschen.' },
+      { q: 'Welches riesige Tier lebt im Schwarzen See?', a: ['Ein Riesenkrake', 'Ein Drache', 'Ein Basilisk', 'Ein Hippogreif'], info: 'Der Riesenkrake ist friedlich. An warmen Tagen sieht man seine Arme aus dem Wasser ragen.' },
+      { q: 'Was hilft Harry beim Trimagischen Turnier, eine Stunde unter Wasser zu bleiben?', a: ['Dianthuskraut', 'Ein Taucherhelm', 'Vielsaft-Trank', 'Ein Tarnumhang'], info: 'Nach dem Kauen wachsen ihm Kiemen und Schwimmhäute. Den Tipp bekommt er von Dobby.' }
+    ] },
+    { id: 'wald', name: 'Verbotener Wald', pos: [2, 5, 3], fragen: [
+      { q: 'Wie heißt die riesige Spinne, die im Verbotenen Wald lebt?', a: ['Aragog', 'Fluffy', 'Norbert', 'Grawp'], info: 'Aragog ist ein alter Freund von Hagrid. Fluffy ist der dreiköpfige Hund.' },
+      { q: 'Welche Wesen – halb Mensch, halb Pferd – leben im Wald?', a: ['Zentauren', 'Hippogreife', 'Thestrale', 'Kobolde'], info: 'Zum Beispiel Firenze, der später sogar Wahrsagen unterrichtet.' },
+      { q: 'Warum ist das Blut eines Einhorns so gefährlich?', a: ['Es hält am Leben, verflucht aber den, der es trinkt', 'Es macht unsichtbar', 'Es verwandelt einen in ein Tier', 'Es lässt einen alles vergessen'], info: 'Darum trinkt es im ersten Band nur einer, der nichts mehr zu verlieren hat: Voldemort.' }
+    ] },
+    { id: 'hagrid', name: 'Hagrids Hütte', pos: [2.8, 11.8, 2.9], fragen: [
+      { q: 'Wie heißt Hagrids großer Hund?', a: ['Fang', 'Fluffy', 'Krummbein', 'Seidenschnabel'], info: 'Fang ist riesig, aber ein ziemlicher Angsthase. Krummbein ist Hermines Kater.' },
+      { q: 'Welche Aufgabe hat Hagrid, als Harry nach Hogwarts kommt?', a: ['Hüter der Schlüssel und der Ländereien', 'Lehrer für Zaubertränke', 'Hausmeister', 'Schulleiter'], info: 'Hausmeister ist Argus Filch, Zaubertränke unterrichtet Snape.' },
+      { q: 'Welches Fach unterrichtet Hagrid ab dem dritten Band?', a: ['Pflege magischer Geschöpfe', 'Kräuterkunde', 'Verwandlung', 'Verteidigung gegen die dunklen Künste'], info: 'Gleich in der ersten Stunde bringt er Hippogreife mit.' }
+    ] },
+    { id: 'quidditch', name: 'Quidditch-Feld', pos: [15, 3.5, 1.3], fragen: [
+      { q: 'Wie viele Spieler hat eine Quidditch-Mannschaft?', a: ['Sieben', 'Fünf', 'Neun', 'Elf'], info: 'Drei Jäger, zwei Treiber, ein Hüter und ein Sucher.' },
+      { q: 'Auf welcher Position spielt Harry?', a: ['Sucher', 'Hüter', 'Treiber', 'Jäger'], info: 'Schon im ersten Jahr – er ist der jüngste Sucher seit hundert Jahren.' },
+      { q: 'Wie viele Punkte bringt es, den Goldenen Schnatz zu fangen?', a: ['150', '10', '50', '100'], info: 'Und das Spiel ist damit sofort vorbei.' }
+    ] },
+    { id: 'gewaechs', name: 'Gewächshäuser', pos: [16.6, 11.2, 2.4], fragen: [
+      { q: 'Welche Pflanze schreit so laut, dass man Ohrenschützer braucht?', a: ['Die Alraune', 'Die Teufelsschlinge', 'Die Peitschende Weide', 'Das Dianthuskraut'], info: 'Ihr Schrei ist für Menschen gefährlich. Aus Alraunen macht man aber auch einen Heiltrank.' },
+      { q: 'Wer unterrichtet Kräuterkunde?', a: ['Professor Sprout', 'Professor McGonagall', 'Professor Snape', 'Professor Flitwick'], info: 'Pomona Sprout ist auch Hauslehrerin von Hufflepuff.' },
+      { q: 'Was hilft gegen die Teufelsschlinge?', a: ['Licht und Feuer', 'Kaltes Wasser', 'Ein lautes Lied', 'Salz'], info: 'Hermine vertreibt sie im ersten Band mit blauen Flammen.' }
+    ] },
+    { id: 'viadukt', name: 'Viadukt & Zug', pos: [15.6, 15, 3.2], fragen: [
+      { q: 'Von welchem Gleis fährt der Hogwarts-Express ab?', a: ['Gleis 9 ¾', 'Gleis 7 ½', 'Gleis 10', 'Gleis 3 ¾'], info: 'Man läuft einfach durch die Absperrung zwischen Gleis 9 und Gleis 10.' },
+      { q: 'In welchem Londoner Bahnhof liegt dieses Gleis?', a: ['King’s Cross', 'Paddington', 'Victoria', 'Waterloo'], info: 'Der Zug fährt am 1. September um elf Uhr ab.' },
+      { q: 'Was steckt in jeder Packung Schokofrosch – außer dem Frosch?', a: ['Eine Sammelkarte mit berühmten Hexen und Zauberern', 'Ein kleiner Zauberstab', 'Ein Los für die Lotterie', 'Ein Brief aus Hogwarts'], info: 'Harrys erste Karte zeigt Albus Dumbledore.' }
+    ] }
+  ];
+
+  var FUNDE = [
+    { id: 'schnatz', name: 'Goldener Schnatz', pos: [18.3, 1.6, 4.2], tipp: 'Er schwirrt hoch über dem Spielfeld herum.',
+      frage: { q: 'Was bekommt Harry im siebten Band von Dumbledore vererbt?', a: ['Den Schnatz aus seinem ersten Quidditch-Spiel', 'Den Elderstab', 'Den Phönix Fawkes', 'Das Denkarium'], info: 'Im Schnatz ist etwas versteckt, das Harry erst ganz am Ende braucht.' } },
+    { id: 'hedwig', name: 'Hedwig', pos: [10.7, 7.1, 5.4], tipp: 'Eine Schneeeule sitzt gern ganz oben auf einem flachen Dach.',
+      frage: { q: 'Wer schenkt Harry die Schneeeule Hedwig?', a: ['Hagrid', 'Dumbledore', 'Sirius Black', 'Onkel Vernon'], info: 'Zum elften Geburtstag, gekauft in der Winkelgasse.' } },
+    { id: 'hut', name: 'Sprechender Hut', pos: [7.7, 15.1, 0.9], tipp: 'Jemand hat ihn auf den Felsen am See liegen lassen.',
+      frage: { q: 'Was zieht Harry im zweiten Band aus dem Sprechenden Hut?', a: ['Das Schwert von Godric Gryffindor', 'Einen Zauberstab aus Holunder', 'Das Diadem von Ravenclaw', 'Einen Tarnumhang'], info: 'Damit besiegt er in der Kammer des Schreckens den Basilisken.' } },
+    { id: 'auto', name: 'Ford Anglia', pos: [0.9, 4.6, 0], tipp: 'Ein blaues Auto versteckt sich zwischen den Bäumen.',
+      frage: { q: 'Wo landen Harry und Ron mit dem fliegenden Auto?', a: ['In der Peitschenden Weide', 'Im Schwarzen See', 'Auf dem Astronomieturm', 'In Hagrids Kürbisbeet'], info: 'Danach fährt das Auto beleidigt in den Verbotenen Wald und bleibt dort.' } },
+    { id: 'heuler', name: 'Heuler', pos: [1.8, 12.0, 0], tipp: 'Ein roter Brief liegt zwischen den Kürbissen.',
+      frage: { q: 'Was passiert, wenn man einen Heuler öffnet?', a: ['Er brüllt die Nachricht für alle hörbar heraus', 'Er verwandelt sich in eine Eule', 'Er wird unsichtbar', 'Er beißt den Empfänger'], info: 'Ron bekommt einen von seiner Mutter – vor der ganzen Großen Halle.' } }
+  ];
+
+  var PKT_FRAGE = 10, PKT_FUND = 5, PKT_BONUS = 10;
+  var MAX_PUNKTE = ORTE.length * 3 * PKT_FRAGE + FUNDE.length * (PKT_FUND + PKT_BONUS);
+
+  /* ---------- Zeichnen: isometrische Klemmbausteine ---------- */
+  var NS = 'http://www.w3.org/2000/svg';
+  var S = 24, OX = 500, OY = 96, CX = S * 0.866, CY = S * 0.5;
+  var svg = document.getElementById('map');
+
+  function P(x, y, z) { return [OX + (x - y) * CX, OY + (x + y) * CY - (z || 0) * S]; }
+  function pts(a) { return a.map(function (p) { return p[0].toFixed(1) + ',' + p[1].toFixed(1); }).join(' '); }
+  function el(tag, attrs, parent) {
+    var e = document.createElementNS(NS, tag);
+    for (var k in attrs) e.setAttribute(k, attrs[k]);
+    if (parent) parent.appendChild(e);
+    return e;
+  }
+  function poly(g, p, fill, extra) {
+    var a = { points: pts(p), fill: fill };
+    if (extra) for (var k in extra) a[k] = extra[k];
+    return el('polygon', a, g);
+  }
+  function hex(h) { h = h.replace('#', ''); return [0, 2, 4].map(function (i) { return parseInt(h.substr(i, 2), 16); }); }
+  function mix(h, f) { // f > 0 heller, f < 0 dunkler
+    return '#' + hex(h).map(function (v) {
+      var n = f > 0 ? v + (255 - v) * f : v * (1 + f);
+      return ('0' + Math.round(Math.max(0, Math.min(255, n))).toString(16)).slice(-2);
+    }).join('');
+  }
+  function farben(h) { return [mix(h, 0.18), h, mix(h, -0.25)]; }
+
+  var rnd = (function () { var s = 1985; return function () { s = (s * 16807) % 2147483647; return (s - 1) / 2147483646; }; })();
+
+  var defs = el('defs', {}, svg);
+  (function () {
+    var f = el('filter', { id: 'glow', x: '-80%', y: '-80%', width: '260%', height: '260%' }, defs);
+    el('feGaussianBlur', { stdDeviation: '2.2', result: 'b' }, f);
+    var m = el('feMerge', {}, f);
+    el('feMergeNode', { 'in': 'b' }, m); el('feMergeNode', { 'in': 'SourceGraphic' }, m);
+    // Noppen-Raster passend zur Iso-Projektion (alle 0,5 Einheiten)
+    var w = CX, h = CY;
+    var p = el('pattern', { id: 'noppen', patternUnits: 'userSpaceOnUse', x: OX, y: OY, width: w.toFixed(2), height: h.toFixed(2) }, defs);
+    [[0, 0], [w, 0], [0, h], [w, h], [w / 2, h / 2]].forEach(function (c) {
+      el('ellipse', { cx: c[0], cy: c[1] + 1.1, rx: 3.6, ry: 2.1, fill: '#00000030' }, p);
+      el('ellipse', { cx: c[0], cy: c[1], rx: 3.6, ry: 2.1, fill: '#ffffff22' }, p);
+    });
+  })();
+  var gradZaehler = 0;
+  function zylGrad(h) {
+    var id = 'zg' + (gradZaehler++);
+    var g = el('linearGradient', { id: id, x1: 0, y1: 0, x2: 1, y2: 0 }, defs);
+    el('stop', { offset: '0', 'stop-color': mix(h, 0.12) }, g);
+    el('stop', { offset: '.45', 'stop-color': h }, g);
+    el('stop', { offset: '1', 'stop-color': mix(h, -0.35) }, g);
+    return 'url(#' + id + ')';
+  }
+
+  // Grundbausteine
+  function box(g, x, y, z, w, d, h, c, opt) {
+    opt = opt || {};
+    var top = [P(x, y, z + h), P(x + w, y, z + h), P(x + w, y + d, z + h), P(x, y + d, z + h)];
+    var li = [P(x, y + d, z), P(x + w, y + d, z), P(x + w, y + d, z + h), P(x, y + d, z + h)];
+    var re = [P(x + w, y, z), P(x + w, y + d, z), P(x + w, y + d, z + h), P(x + w, y, z + h)];
+    var extra = opt.cls ? { 'class': opt.cls } : null;
+    poly(g, li, c[1], extra); poly(g, re, c[2], extra);
+    if (!opt.ohneDeckel) poly(g, top, c[0], extra);
+    if (opt.fugen) { // Steinfugen
+      for (var k = z + 0.4; k < z + h - 0.05; k += 0.4) {
+        el('line', { x1: P(x, y + d, k)[0], y1: P(x, y + d, k)[1], x2: P(x + w, y + d, k)[0], y2: P(x + w, y + d, k)[1], stroke: '#00000018', 'stroke-width': 0.8 }, g);
+        el('line', { x1: P(x + w, y, k)[0], y1: P(x + w, y, k)[1], x2: P(x + w, y + d, k)[0], y2: P(x + w, y + d, k)[1], stroke: '#00000022', 'stroke-width': 0.8 }, g);
+      }
+    }
+    if (opt.noppe) {
+      var m = P(x + w / 2, y + d / 2, z + h);
+      el('ellipse', { cx: m[0], cy: m[1] + 1, rx: 4, ry: 2.3, fill: '#00000033' }, g);
+      el('ellipse', { cx: m[0], cy: m[1] - 0.5, rx: 4, ry: 2.3, fill: c[0] }, g);
+    }
+  }
+  function zinnen(g, x, y, z, w, d, c) {
+    var s = 0.26, i;
+    for (i = 0; i < d - 0.1; i += 0.55) box(g, x + w - s, y + i, z, s, s, s, c);
+    for (i = 0; i < w - 0.1; i += 0.55) box(g, x + i, y + d - s, z, s, s, s, c);
+  }
+  function fensterLinks(g, x0, x1, Y, z, n, hoehe, breite) { // Fenster auf der vorderen linken Seite (Ebene y = Y)
+    breite = breite || 0.28;
+    for (var i = 0; i < n; i++) {
+      var u = x0 + (i + 0.5) * (x1 - x0) / n - breite / 2;
+      poly(g, [P(u, Y, z), P(u + breite, Y, z), P(u + breite, Y, z + hoehe), P(u + breite / 2, Y, z + hoehe + breite * 0.6), P(u, Y, z + hoehe)], '#2a2733', { 'class': 'win' });
+    }
+  }
+  function fensterRechts(g, y0, y1, X, z, n, hoehe, breite) { // Fenster auf der vorderen rechten Seite (Ebene x = X)
+    breite = breite || 0.28;
+    for (var i = 0; i < n; i++) {
+      var u = y0 + (i + 0.5) * (y1 - y0) / n - breite / 2;
+      poly(g, [P(X, u, z), P(X, u + breite, z), P(X, u + breite, z + hoehe), P(X, u + breite / 2, z + hoehe + breite * 0.6), P(X, u, z + hoehe)], '#2a2733', { 'class': 'win' });
+    }
+  }
+  function satteldach(g, x, y, z, w, d, h, c) { // First läuft entlang x
+    var ym = y + d / 2;
+    poly(g, [P(x, y + d, z), P(x + w, y + d, z), P(x + w, ym, z + h), P(x, ym, z + h)], c[1]);
+    poly(g, [P(x + w, y, z), P(x + w, y + d, z), P(x + w, ym, z + h)], c[2]);
+    for (var i = 0.4; i < w; i += 0.4) {
+      el('line', { x1: P(x + i, y + d, z)[0], y1: P(x + i, y + d, z)[1], x2: P(x + i, ym, z + h)[0], y2: P(x + i, ym, z + h)[1], stroke: '#00000022', 'stroke-width': 0.8 }, g);
+    }
+  }
+  function pyramide(g, x, y, z, w, d, h, c) {
+    var a = P(x + w / 2, y + d / 2, z + h);
+    poly(g, [P(x, y + d, z), P(x + w, y + d, z), a], c[1]);
+    poly(g, [P(x + w, y, z), P(x + w, y + d, z), a], c[2]);
+    el('circle', { cx: a[0], cy: a[1] - 1, r: 1.8, fill: '#d9b85c' }, g);
+  }
+  function turm(g, cx, cy, z, r, h, wand, dachH, dach, fenster) {
+    var b = P(cx, cy, z), t = P(cx, cy, z + h);
+    var rx = r * S * 1.2247, ry = r * S * 0.7071;
+    el('path', { 'class': 'kante', d: 'M' + (b[0] - rx) + ',' + b[1] + ' A' + rx + ',' + ry + ' 0 0 0 ' + (b[0] + rx) + ',' + b[1] +
+      ' L' + (t[0] + rx) + ',' + t[1] + ' A' + rx + ',' + ry + ' 0 0 1 ' + (t[0] - rx) + ',' + t[1] + ' Z', fill: zylGrad(wand) }, g);
+    for (var k = 0.4; k < h; k += 0.4) {
+      var yk = b[1] - k * S;
+      el('path', { d: 'M' + (b[0] - rx) + ',' + yk + ' A' + rx + ',' + ry + ' 0 0 0 ' + (b[0] + rx) + ',' + yk, fill: 'none', stroke: '#00000016', 'stroke-width': 0.8 }, g);
+    }
+    if (fenster) {
+      for (var j = 0; j < fenster; j++) {
+        var fy = b[1] + ry - 10 - (j + 0.5) * (h * S - 12) / fenster;
+        if (fy - 8 < t[1] + ry) continue;
+        [-rx * 0.45, rx * 0.25].forEach(function (dx) {
+          el('path', { 'class': 'win', d: 'M' + (t[0] + dx - 2.2) + ',' + fy + ' v-6 a2.2,2.2 0 0 1 4.4,0 v6 z' }, g);
+        });
+      }
+    }
+    if (dachH) {
+      var rc = rx * 1.18, rcy = ry * 1.18, a = P(cx, cy, z + h + dachH);
+      el('path', { 'class': 'kante', d: 'M' + (t[0] - rc) + ',' + t[1] + ' L' + a[0] + ',' + a[1] + ' L' + (t[0] + rc) + ',' + t[1] +
+        ' A' + rc + ',' + rcy + ' 0 0 1 ' + (t[0] - rc) + ',' + t[1] + ' Z', fill: zylGrad(dach) }, g);
+      el('circle', { cx: a[0], cy: a[1] - 1, r: 1.8, fill: '#d9b85c' }, g);
+    } else {
+      el('ellipse', { cx: t[0], cy: t[1], rx: rx, ry: ry, fill: mix(wand, 0.15) }, g);
+    }
+  }
+  function baum(g, x, y, s, typ) {
+    var b = P(x, y, 0), hgt = (1.7 + rnd() * 0.9) * S * s;
+    el('rect', { x: b[0] - 2, y: b[1] - 9, width: 4, height: 9, fill: '#4a3222' }, g);
+    if (typ === 'rund') {
+      el('ellipse', { cx: b[0] + 1, cy: b[1] - hgt * 0.55, rx: 11 * s, ry: hgt * 0.42, fill: '#2b4527' }, g);
+      el('ellipse', { cx: b[0] - 2, cy: b[1] - hgt * 0.62, rx: 8.5 * s, ry: hgt * 0.32, fill: '#3b5c33' }, g);
+      return;
+    }
+    var stufen = [['#24391f', 1, 0.15], ['#2f4a2a', 0.8, 0.42], ['#3d5e35', 0.58, 0.66]];
+    stufen.forEach(function (st) {
+      var bb = b[1] - hgt * st[2], w = 11 * s * st[1];
+      poly(g, [[b[0] - w, bb], [b[0], bb - hgt * 0.48], [b[0] + w, bb]], st[0]);
+    });
+    el('ellipse', { cx: b[0], cy: b[1] - hgt * 1.08, rx: 2.6, ry: 1.5, fill: '#4f7344' }, g);
+  }
+  function inPoly(x, y, poly) {
+    var drin = false;
+    for (var i = 0, j = poly.length - 1; i < poly.length; j = i++) {
+      var xi = poly[i][0], yi = poly[i][1], xj = poly[j][0], yj = poly[j][1];
+      if (((yi > y) !== (yj > y)) && (x < (xj - xi) * (y - yi) / (yj - yi) + xi)) drin = !drin;
+    }
+    return drin;
+  }
+
+  /* ---------- Szene aufbauen ---------- */
+  var SEE = [[0, 13.4], [2.6, 13.0], [4.8, 13.9], [5.8, 15.8], [9, 16.3], [12, 15.9], [13.6, 14.2], [16.5, 14.0], [18.6, 15.2], [17.8, 17.2], [16.6, 20], [0, 20]];
+  var TAN = '#cdb98c', DACH = '#626872', FELS = '#8a8d93', STEG = '#b3a68a';
+  var cTan = farben(TAN), cDach = farben(DACH), cFels = farben(FELS);
+
+  var schicht = [];  // { ebene, tiefe, gruppe, zeichne }
+  function add(ebene, tiefe, gruppe, fn) { schicht.push({ ebene: ebene, tiefe: tiefe, gruppe: gruppe, fn: fn }); }
+
+  // Grundplatte
+  var basis = el('g', {}, svg);
+  box(basis, -0.25, -0.25, -1.25, 20.5, 20.5, 0.35, ['#1b1410', '#3b261a', '#2a1a12']);
+  box(basis, 0, 0, -1, 20, 20, 1, ['#717c3c', '#5b3a26', '#3f281b'], { ohneDeckel: true });
+  var platte = [P(0, 0, 0), P(20, 0, 0), P(20, 20, 0), P(0, 20, 0)];
+  poly(basis, platte, '#717c3c');
+  // Wiesenflecken für etwas Leben
+  for (var f = 0; f < 26; f++) {
+    var fx = rnd() * 19 + 0.5, fy = rnd() * 19 + 0.5;
+    if (inPoly(fx, fy, SEE)) continue;
+    var r0 = 0.5 + rnd() * 1.1, fl = [];
+    for (var t = 0; t < 8; t++) fl.push(P(fx + Math.cos(t / 8 * 6.283) * r0, fy + Math.sin(t / 8 * 6.283) * r0 * 0.8, 0));
+    poly(basis, fl, rnd() > 0.5 ? '#7d8946' : '#66713a', { stroke: 'none' });
+  }
+  // Weg vom Schloss nach hinten
+  poly(basis, [P(9.0, 5.4), P(9.6, 5.3), P(10.4, 1.2), P(9.8, 1.0)], '#b6a272');
+  // See
+  var seeRand = SEE.map(function (p) { return P(p[0], p[1], 0); });
+  poly(basis, seeRand, '#c3b27e');
+  var seeInnen = SEE.map(function (p) { return P(p[0] + (p[0] > 0 && p[0] < 19 ? 0.2 : 0), p[1] + (p[1] < 19.9 ? 0.25 : 0), 0); });
+  poly(basis, seeInnen, '#3b6a95', { 'class': 'seefl' });
+  poly(basis, seeInnen, 'url(#noppen)', { stroke: 'none', opacity: 0.8 });
+  poly(basis, platte, 'url(#noppen)', { stroke: 'none', opacity: 0.85 });
+  // Wasser an der Plattenkante
+  poly(basis, [P(0, 20, 0), P(16.6, 20, 0), P(16.6, 20, -0.3), P(0, 20, -0.3)], '#2e5577', { stroke: 'none' });
+  // Quidditch-Feld
+  var oval = [];
+  for (var q = 0; q < 48; q++) oval.push(P(15 + Math.cos(q / 48 * 6.283) * 3, 3.5 + Math.sin(q / 48 * 6.283) * 2.05, 0));
+  poly(basis, oval, '#c9b37a');
+  var ovalI = [];
+  for (q = 0; q < 48; q++) ovalI.push(P(15 + Math.cos(q / 48 * 6.283) * 2.7, 3.5 + Math.sin(q / 48 * 6.283) * 1.8, 0));
+  poly(basis, ovalI, '#8a9a4d', { 'class': 'feld-gruen' });
+  var mitte = P(15, 3.5, 0);
+  el('ellipse', { cx: mitte[0], cy: mitte[1], rx: 10, ry: 6, fill: 'none', stroke: '#ffffff99', 'stroke-width': 1.2 }, basis);
+
+  // Felsen und Plateau
+  add(0, 20, 'schloss', function (g) { box(g, 6, 6, 0, 8, 8, 1.2, cFels, { fugen: true }); });
+  add(0, 23, 'schloss', function (g) { box(g, 6.2, 14, 0, 2.6, 1.6, 0.9, farben('#7f8288')); });
+  add(0, 24, 'schloss', function (g) { box(g, 8.8, 14, 0, 2.4, 1.9, 0.7, farben('#93969b')); });
+  add(0, 25, 'schloss', function (g) { box(g, 11.2, 14, 0, 2.2, 1.4, 0.5, farben('#7a7d83')); });
+  add(0, 18, 'schloss', function (g) { box(g, 5.0, 11, 0, 1.0, 3.0, 0.6, farben('#8a8d93')); });
+  add(0, 31, 'viadukt', function (g) { box(g, 17.9, 14.2, 0, 1.8, 1.8, 0.5, cFels); });
+
+  // Schloss
+  add(1, 13.8, 'schloss', function (g) { box(g, 7, 6.3, 1.2, 2.5, 0.5, 1.6, cTan, { fugen: true }); zinnen(g, 7, 6.3, 2.8, 2.5, 0.5, cTan); });
+  add(1, 15.2, 'schloss', function (g) { box(g, 6.4, 7, 1.2, 0.5, 5, 1.6, cTan, { fugen: true }); zinnen(g, 6.4, 7, 2.8, 0.5, 5, cTan); });
+  add(1, 14.2, 'schloss', function (g) { turm(g, 7.0, 7.0, 1.2, 0.65, 4.8, TAN, 2.0, DACH, 3); });
+  add(1, 16.4, 'schloss', function (g) { turm(g, 9.8, 6.7, 1.2, 0.36, 6.0, TAN, 1.7, DACH, 3); });
+  add(1, 18.6, 'schloss', function (g) {
+    box(g, 9.5, 6.4, 1.2, 3, 2.2, 4.2, cTan, { fugen: true });
+    fensterLinks(g, 9.5, 12.5, 8.6, 2.0, 4, 0.55); fensterLinks(g, 9.5, 12.5, 8.6, 3.4, 4, 0.55);
+    fensterRechts(g, 6.4, 8.6, 12.5, 2.0, 3, 0.55); fensterRechts(g, 6.4, 8.6, 12.5, 3.4, 3, 0.55);
+    zinnen(g, 9.5, 6.4, 5.4, 3, 2.2, cTan);
+  });
+  add(1, 20.5, 'astro', function (g) { turm(g, 13.1, 7.4, 1.2, 0.8, 7.6, TAN, 2.4, DACH, 6); });
+  add(1, 20.0, 'halle', function (g) {
+    box(g, 7, 9.2, 1.2, 4.6, 1.6, 2.4, cTan, { fugen: true });
+    fensterLinks(g, 7, 11.6, 10.8, 1.85, 6, 1.0, 0.3);
+    fensterRechts(g, 9.2, 10.8, 11.6, 1.85, 2, 1.0, 0.3);
+    satteldach(g, 7, 9.2, 3.6, 4.6, 1.6, 1.3, cDach);
+  });
+  add(1, 23.0, 'schloss', function (g) {
+    box(g, 11.8, 9.6, 1.2, 1.6, 1.6, 4.6, cTan, { fugen: true });
+    fensterLinks(g, 11.8, 13.4, 11.2, 2.1, 2, 0.6); fensterRechts(g, 9.6, 11.2, 13.4, 2.1, 2, 0.6);
+    var u = P(12.6, 11.2, 4.7);
+    el('ellipse', { cx: u[0], cy: u[1], rx: 6.5, ry: 7.2, fill: '#f1e6c6', stroke: '#6b5a3a', 'stroke-width': 1 }, g);
+    el('path', { d: 'M' + u[0] + ',' + u[1] + ' v-5 M' + u[0] + ',' + u[1] + ' l3.5,1.5', stroke: '#3a2a17', 'stroke-width': 1.2, fill: 'none' }, g);
+    pyramide(g, 11.8, 9.6, 5.8, 1.6, 1.6, 2.4, cDach);
+  });
+  add(1, 24.2, 'schloss', function (g) { turm(g, 12.2, 12.7, 1.2, 0.6, 3.0, TAN, 1.6, DACH, 2); });
+  add(1, 22.6, 'schloss', function (g) {
+    box(g, 7.6, 12.4, 1.2, 4, 0.6, 1.6, cTan, { fugen: true });
+    fensterLinks(g, 7.6, 11.6, 13.0, 1.6, 5, 0.45);
+    zinnen(g, 7.6, 12.4, 2.8, 4, 0.6, cTan);
+  });
+  add(1, 22.8, 'schloss', function (g) { turm(g, 6.9, 12.8, 1.2, 0.9, 3.4, TAN, 2.1, DACH, 2); });
+
+  // Viadukt mit Torhaus
+  add(1, 30.5, 'viadukt', function (g) {
+    var x = 12.6, y = 14.6, w = 5.6, d = 0.9, h = 2.0, Y = y + d;
+    box(g, x, y, 0, w, d, h, farben(STEG), { fugen: true });
+    for (var i = 0; i < 5; i++) {
+      var u = x + 0.56 + i * 1.12, r = 0.36, p = [P(u - r, Y, 0), P(u - r, Y, 1.0)];
+      for (var t = 180; t >= 0; t -= 20) p.push(P(u + r * Math.cos(t * Math.PI / 180), Y, 1.0 + r * Math.sin(t * Math.PI / 180)));
+      p.push(P(u + r, Y, 0));
+      poly(g, p, '#24303d', { stroke: 'none' });
+    }
+    zinnen(g, x, y, h, w, d, farben(STEG));
+    for (var l = 0; l < 4; l++) {
+      var lp = P(x + 0.9 + l * 1.4, y + 0.45, h);
+      el('line', { x1: lp[0], y1: lp[1], x2: lp[0], y2: lp[1] - 11, stroke: '#3a332a', 'stroke-width': 1.4 }, g);
+      el('circle', { 'class': 'win', cx: lp[0], cy: lp[1] - 12.5, r: 2.4 }, g);
+    }
+  });
+  add(1, 32.6, 'viadukt', function (g) {
+    box(g, 18.2, 14.4, 0.5, 1.3, 1.4, 1.6, cTan, { fugen: true });
+    fensterLinks(g, 18.2, 19.5, 15.8, 1.0, 2, 0.5); fensterRechts(g, 14.4, 15.8, 19.5, 1.0, 1, 0.5);
+    pyramide(g, 18.2, 14.4, 2.1, 1.3, 1.4, 1.4, cDach);
+  });
+
+  // Hagrids Hütte mit Kürbisbeet
+  add(1, 14.6, 'hagrid', function (g) {
+    turm(g, 2.8, 11.8, 0, 0.75, 1.1, '#8b7b62', 1.1, '#5e4128', 0);
+    var tp = P(2.8, 12.55, 0);
+    el('rect', { x: tp[0] - 3.5, y: tp[1] - 14, width: 7, height: 12, rx: 3, fill: '#4a3020' }, g);
+    var wp = P(3.4, 12.3, 0.6);
+    el('rect', { 'class': 'win', x: wp[0] - 2.5, y: wp[1] - 3, width: 5, height: 5, rx: 1 }, g);
+    box(g, 3.05, 11.4, 1.3, 0.28, 0.28, 0.8, farben('#6d6458'));
+    var sp = P(3.19, 11.54, 2.2), rg = el('g', {}, g);
+    for (var i = 0; i < 3; i++) el('circle', { 'class': 'rauch', cx: sp[0], cy: sp[1] - 3, r: 3.5, fill: '#c9c6c0' }, rg);
+  });
+  [[1.2, 11.0], [1.7, 11.4], [1.1, 11.8], [1.6, 12.4], [2.0, 12.7], [1.2, 12.5], [2.4, 12.6]].forEach(function (k, i) {
+    add(1, k[0] + k[1], 'hagrid', function (g) {
+      var p = P(k[0], k[1], 0), s = i === 2 ? 1.4 : 1;
+      el('ellipse', { cx: p[0], cy: p[1] - 3 * s, rx: 5 * s, ry: 3.6 * s, fill: '#d9782b' }, g);
+      el('ellipse', { cx: p[0] - 1.6 * s, cy: p[1] - 3 * s, rx: 1.6 * s, ry: 3.4 * s, fill: '#b85f1f' }, g);
+      el('rect', { x: p[0] - 0.8, y: p[1] - 8.2 * s, width: 1.6, height: 2.4, fill: '#4f6b2f' }, g);
+    });
+  });
+
+  // Quidditch: Torringe und Tribünen
+  [[12.55, [3.0, 3.5, 4.0]], [17.45, [3.0, 3.5, 4.0]]].forEach(function (seite) {
+    seite[1].forEach(function (yy, i) {
+      add(1, seite[0] + yy, 'quidditch', function (g) {
+        var h = i === 1 ? 2.3 : 1.7, b = P(seite[0], yy, 0), t = P(seite[0], yy, h);
+        el('line', { x1: b[0], y1: b[1], x2: t[0], y2: t[1], stroke: '#d6bf77', 'stroke-width': 1.8 }, g);
+        el('ellipse', { 'class': 'ring', cx: t[0], cy: t[1] - 5, rx: 3.6, ry: 5.2, fill: 'none', stroke: '#d6bf77', 'stroke-width': 1.7 }, g);
+      });
+    });
+  });
+  [['#9c1c1c', 11.0, 3.1], ['#1f5e3a', 18.3, 3.1], ['#1f3a7a', 14.6, 0.55], ['#e0b52f', 14.6, 6.0]].forEach(function (tr) {
+    add(1, tr[1] + tr[2] + 0.8, 'quidditch', function (g) {
+      box(g, tr[1], tr[2], 0, 0.8, 0.8, 1.6, farben('#8a6a45'));
+      box(g, tr[1] + 0.05, tr[2] + 0.05, 1.6, 0.7, 0.7, 0.35, farben(tr[0]));
+      pyramide(g, tr[1] + 0.05, tr[2] + 0.05, 1.95, 0.7, 0.7, 0.9, farben(tr[0]));
+    });
+  });
+
+  // Gewächshäuser
+  [9.5, 11.6].forEach(function (yy) {
+    add(1, 16.5 + yy + 0.6, 'gewaechs', function (g) {
+      var x = 15, w = 3, d = 1.2, h = 0.9;
+      box(g, x, yy, 0, w, d, 0.2, farben('#7a6a55'));
+      for (var i = 0; i < 6; i++) {
+        var p = P(x + 0.3 + i * 0.48, yy + 0.6, 0.2);
+        el('ellipse', { cx: p[0], cy: p[1] - 3, rx: 4, ry: 3.5, fill: i % 2 ? '#4f8a3a' : '#3f7434' }, g);
+      }
+      box(g, x, yy, 0.2, w, d, h, ['#cfe6ea66', '#bcdde480', '#9cc3cc80'], { cls: 'glass', ohneDeckel: true });
+      var ym = yy + d / 2, z = 0.2 + h;
+      poly(g, [P(x, yy + d, z), P(x + w, yy + d, z), P(x + w, ym, z + 0.6), P(x, ym, z + 0.6)], '#d6ecef80', { 'class': 'glass' });
+      poly(g, [P(x + w, yy, z), P(x + w, yy + d, z), P(x + w, ym, z + 0.6)], '#a9cdd580', { 'class': 'glass' });
+      for (var s = 0; s <= w + 0.01; s += 0.5) {
+        var a = P(x + s, yy + d, 0.2), b = P(x + s, yy + d, z), c = P(x + s, ym, z + 0.6);
+        el('polyline', { points: pts([a, b, c]), fill: 'none', stroke: '#e9f2ee', 'stroke-width': 0.9, opacity: 0.8 }, g);
+      }
+    });
+  });
+
+  // Bäume
+  function baumOk(x, y) {
+    if (inPoly(x, y, SEE)) return false;
+    if (x > 5.6 && x < 14.6 && y > 5.6 && y < 16) return false;          // Schloss
+    if (Math.hypot(x - 2.8, y - 11.8) < 1.5) return false;              // Hütte
+    if (x > 0.8 && x < 2.7 && y > 10.6 && y < 13.4) return false;       // Kürbisse
+    if (x > 10.6 && x < 19.4 && y > 0.2 && y < 6.9) return false;       // Quidditch
+    if (x > 14.6 && x < 18.4 && y > 9.1 && y < 13.2) return false;      // Gewächshäuser
+    if (x > 12.2 && y > 13.8 && y < 16.2) return false;                 // Viadukt
+    if (Math.hypot(x - 0.9, y - 4.6) < 0.95) return false;              // Auto
+    if (x > 9.3 && x < 10.8 && y < 5.6) return false;
+    return true;
+  }
+  function pflanze(x, y, s, typ) { if (baumOk(x, y)) add(1, x + y, 'wald', function (g) { baum(g, x, y, s, typ); }); }
+  for (var bx = 0.45; bx < 5.4; bx += 0.85) for (var by = 0.5; by < 13.4; by += 0.85) pflanze(bx + (rnd() - 0.5) * 0.5, by + (rnd() - 0.5) * 0.5, 0.9 + rnd() * 0.35, rnd() > 0.85 ? 'rund' : '');
+  for (bx = 5.4; bx < 19.8; bx += 0.75) pflanze(bx, 0.35 + rnd() * 0.3, 0.8 + rnd() * 0.3, rnd() > 0.7 ? 'rund' : '');
+  for (by = 6.9; by < 19.6; by += 0.8) pflanze(19.55 - rnd() * 0.4, by, 0.8 + rnd() * 0.3, rnd() > 0.6 ? 'rund' : '');
+  for (var e = 0; e < 26; e++) pflanze(14.6 + rnd() * 4.6, 6.9 + rnd() * 2.2, 0.7 + rnd() * 0.3, 'rund');
+  for (e = 0; e < 18; e++) pflanze(17.2 + rnd() * 2.6, 16.2 + rnd() * 3.6, 0.75 + rnd() * 0.3, rnd() > 0.5 ? 'rund' : '');
+  for (e = 0; e < 10; e++) pflanze(5.0 + rnd() * 0.6, 6.3 + rnd() * 4.5, 0.75, '');
+  for (e = 0; e < 8; e++) pflanze(14.7 + rnd() * 3.5, 13.3 + rnd() * 0.5, 0.65, 'rund');
+
+  // Versteckte Dinge (Bilder)
+  var FUND_ZEICHNER = {
+    schnatz: function (g, p) {
+      el('ellipse', { cx: p[0] - 6, cy: p[1] - 2, rx: 5.5, ry: 2.2, fill: '#f4f1e6', transform: 'rotate(-25 ' + (p[0] - 6) + ' ' + (p[1] - 2) + ')' }, g);
+      el('ellipse', { cx: p[0] + 6, cy: p[1] - 2, rx: 5.5, ry: 2.2, fill: '#f4f1e6', transform: 'rotate(25 ' + (p[0] + 6) + ' ' + (p[1] - 2) + ')' }, g);
+      el('circle', { cx: p[0], cy: p[1], r: 3.4, fill: '#e8b730', stroke: '#9a7413', 'stroke-width': 0.7 }, g);
+    },
+    hedwig: function (g, p) {
+      el('ellipse', { cx: p[0], cy: p[1] - 5, rx: 4, ry: 5, fill: '#f6f5f0' }, g);
+      el('circle', { cx: p[0], cy: p[1] - 11.5, r: 3.3, fill: '#fbfaf6' }, g);
+      el('circle', { cx: p[0] - 1.2, cy: p[1] - 12, r: 0.7, fill: '#d49a1e' }, g);
+      el('circle', { cx: p[0] + 1.2, cy: p[1] - 12, r: 0.7, fill: '#d49a1e' }, g);
+      el('path', { d: 'M' + (p[0] - 2) + ',' + (p[1] - 5) + ' l1,1 l1,-1 l1,1 l1,-1', stroke: '#9a9a9a', 'stroke-width': 0.6, fill: 'none' }, g);
+    },
+    hut: function (g, p) {
+      el('ellipse', { cx: p[0], cy: p[1], rx: 7, ry: 2.4, fill: '#5b3f26' }, g);
+      el('path', { d: 'M' + (p[0] - 4.5) + ',' + p[1] + ' Q' + (p[0] - 1) + ',' + (p[1] - 7) + ' ' + (p[0] + 1) + ',' + (p[1] - 12) +
+        ' Q' + (p[0] + 2) + ',' + (p[1] - 7) + ' ' + (p[0] + 5) + ',' + (p[1] - 7) + ' Q' + (p[0] + 3) + ',' + (p[1] - 4) + ' ' + (p[0] + 4.5) + ',' + p[1] + ' Z', fill: '#6e4e2f' }, g);
+      el('path', { d: 'M' + (p[0] - 2) + ',' + (p[1] - 3) + ' q2,1.2 4,0', stroke: '#3a2614', 'stroke-width': 0.8, fill: 'none' }, g);
+    },
+    auto: function (g) {
+      var ax = 0.45, ay = 4.35; // Ecke hinten links des Autos
+      box(g, ax, ay, 0.1, 0.95, 0.5, 0.3, farben('#4f8fc9'));
+      box(g, ax + 0.2, ay + 0.05, 0.4, 0.45, 0.4, 0.22, ['#9fc6e6', '#cfe4f2', '#7fa9cc']);
+      [[ax + 0.2, ay + 0.5], [ax + 0.75, ay + 0.5]].forEach(function (r) { var w = P(r[0], r[1], 0.08); el('circle', { cx: w[0], cy: w[1], r: 2, fill: '#1c1c1c' }, g); });
+    },
+    heuler: function (g, p) {
+      el('rect', { x: p[0] - 5, y: p[1] - 7, width: 10, height: 7, rx: 0.8, fill: '#c42a20', transform: 'rotate(-12 ' + p[0] + ' ' + (p[1] - 3) + ')' }, g);
+      el('path', { d: 'M' + (p[0] - 5) + ',' + (p[1] - 7) + ' l5,4 l5,-4', fill: 'none', stroke: '#7d140e', 'stroke-width': 0.9, transform: 'rotate(-12 ' + p[0] + ' ' + (p[1] - 3) + ')' }, g);
+    }
+  };
+  FUNDE.forEach(function (fd) {
+    var tiefe = { schnatz: 40, hedwig: 30, hut: 23.5, auto: 5.6, heuler: 13.85 }[fd.id];
+    add(1, tiefe, 'fund-' + fd.id, function (g) { FUND_ZEICHNER[fd.id](g, P(fd.pos[0], fd.pos[1], fd.pos[2])); });
+  });
+
+  schicht.sort(function (a, b) { return a.ebene - b.ebene || a.tiefe - b.tiefe; });
+  var szene = el('g', {}, svg);
+  schicht.forEach(function (s) { s.fn(el('g', { 'class': 'loc-' + s.gruppe }, szene)); });
+
+  // Treffer für die versteckten Dinge (unsichtbar, großzügig) und Marker für die Orte
+  var oben = el('g', {}, svg);
+  var trefferG = el('g', {}, oben);
+  var markerG = el('g', {}, oben);
+  var funkenG = el('g', { 'class': 'funken' }, oben);
+  FUNDE.forEach(function (fd) {
+    var p = P(fd.pos[0], fd.pos[1], fd.pos[2]);
+    var t = el('circle', { 'class': 'treffer', cx: p[0], cy: p[1] - 4, r: 17, 'data-fund': fd.id }, trefferG);
+    t.addEventListener('click', function () { fundGeklickt(fd); });
+  });
+  ORTE.forEach(function (o, i) {
+    var p = P(o.pos[0], o.pos[1], o.pos[2]);
+    var m = el('g', { 'class': 'marker', tabindex: '0', role: 'button', 'aria-label': (i + 1) + '. ' + o.name, 'data-ort': o.id }, markerG);
+    el('title', {}, m).textContent = o.name;
+    el('circle', { 'class': 'puls', cx: p[0], cy: p[1], r: 14 }, m);
+    el('circle', { 'class': 'kreis', cx: p[0], cy: p[1], r: 14 }, m);
+    el('text', { x: p[0], y: p[1] + 0.5 }, m).textContent = String(i + 1);
+    m.addEventListener('click', function () { ortOeffnen(o); });
+    m.addEventListener('keydown', function (ev) { if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); ortOeffnen(o); } });
+  });
+
+  /* ---------- Spielstand ---------- */
+  var stand;
+  function neuerStand() {
+    stand = { haus: null, punkte: 0, orte: {}, funde: {} };
+    ORTE.forEach(function (o) { stand.orte[o.id] = { beantwortet: 0, richtig: 0 }; });
+    svg.classList.remove('alle');
+    document.querySelectorAll('#map .lit').forEach(function (n) { n.classList.remove('lit'); });
+    document.querySelectorAll('#map .gefunden-ring').forEach(function (n) { n.remove(); });
+  }
+
+  function hausSetzen(id) {
+    var h = HAEUSER[id];
+    stand.haus = id;
+    var r = document.documentElement.style;
+    r.setProperty('--haus', h.farbe); r.setProperty('--haus-akzent', h.akzent); r.setProperty('--haus-text', h.text);
+    anzeigen();
+  }
+
+  function anzeigen() {
+    var h = stand.haus ? HAEUSER[stand.haus] : null;
+    document.getElementById('p-haus').textContent = h ? 'Haus ' + h.name : 'Haus: –';
+    document.getElementById('p-punkte').textContent = stand.punkte;
+    var fertig = ORTE.filter(function (o) { return stand.orte[o.id].beantwortet >= 3; }).length;
+    var gefunden = FUNDE.filter(function (f) { return stand.funde[f.id]; }).length;
+    document.getElementById('p-orte').textContent = fertig + '/' + ORTE.length;
+    document.getElementById('p-funde').textContent = gefunden + '/' + FUNDE.length;
+
+    var liste = document.getElementById('orte');
+    liste.innerHTML = '';
+    ORTE.forEach(function (o, i) {
+      var s = stand.orte[o.id], ok = s.beantwortet >= 3;
+      var b = document.createElement('button');
+      b.type = 'button'; b.className = 'ort' + (ok ? ' fertig' : '');
+      b.innerHTML = '<span class="nr"></span><span class="name"></span><span class="stand"></span>';
+      b.querySelector('.nr').textContent = ok ? '✓' : String(i + 1);
+      b.querySelector('.name').textContent = o.name;
+      b.querySelector('.stand').textContent = ok ? s.richtig + '/3 richtig' : (s.beantwortet ? s.beantwortet + '/3' : '');
+      b.addEventListener('click', function () { ortOeffnen(o); });
+      liste.appendChild(b);
+      var m = markerG.querySelector('[data-ort="' + o.id + '"]');
+      m.classList.toggle('fertig', ok);
+      m.querySelector('text').textContent = ok ? '✓' : String(i + 1);
+      document.querySelectorAll('#map .loc-' + o.id).forEach(function (n) { n.classList.toggle('lit', ok); });
+    });
+
+    var fl = document.getElementById('funde');
+    fl.innerHTML = '';
+    FUNDE.forEach(function (f) {
+      var li = document.createElement('li');
+      var ja = !!stand.funde[f.id];
+      li.className = ja ? 'ja' : '';
+      li.innerHTML = '<span class="haken" aria-hidden="true"></span><span class="name"></span>';
+      li.querySelector('.haken').textContent = ja ? '✓' : '';
+      li.querySelector('.name').textContent = f.name + (ja ? ' – gefunden' : '');
+      if (!ja) {
+        var tk = document.createElement('button');
+        tk.type = 'button'; tk.className = 'tipp-knopf'; tk.textContent = 'Tipp';
+        tk.setAttribute('aria-expanded', 'false');
+        tk.addEventListener('click', function () {
+          var da = li.querySelector('.tipp');
+          if (da) { da.remove(); tk.setAttribute('aria-expanded', 'false'); return; }
+          var p = document.createElement('span'); p.className = 'tipp'; p.textContent = f.tipp; li.appendChild(p);
+          tk.setAttribute('aria-expanded', 'true');
+        });
+        li.appendChild(tk);
+      }
+      fl.appendChild(li);
+    });
+    if (fertig === ORTE.length) svg.classList.add('alle');
+  }
+
+  /* ---------- Dialog ---------- */
+  var schleier = document.getElementById('schleier'), blatt = document.getElementById('blatt');
+  var zuvorFokus = null, schliessbar = true;
+  function dialog(html, darfZu) {
+    if (schleier.hidden) zuvorFokus = document.activeElement;
+    schliessbar = darfZu !== false;
+    blatt.innerHTML = html;
+    schleier.hidden = false;
+    var f = blatt.querySelector('[data-fokus]') || blatt.querySelector('button');
+    if (f) f.focus();
+  }
+  function zu() {
+    schleier.hidden = true; blatt.innerHTML = '';
+    if (zuvorFokus && zuvorFokus.focus) zuvorFokus.focus();
+  }
+  schleier.addEventListener('click', function (ev) { if (ev.target === schleier && schliessbar) zu(); });
+  document.addEventListener('keydown', function (ev) {
+    if (schleier.hidden) return;
+    if (ev.key === 'Escape' && schliessbar) { zu(); return; }
+    if (ev.key === 'Tab') { // Fokus im Dialog halten
+      var k = blatt.querySelectorAll('button:not(:disabled)');
+      if (!k.length) return;
+      var a = k[0], z = k[k.length - 1];
+      if (ev.shiftKey && document.activeElement === a) { ev.preventDefault(); z.focus(); }
+      else if (!ev.shiftKey && document.activeElement === z) { ev.preventDefault(); a.focus(); }
+    }
+  });
+  function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+  function mischen(a) { a = a.slice(); for (var i = a.length - 1; i > 0; i--) { var j = Math.floor(Math.random() * (i + 1)); var t = a[i]; a[i] = a[j]; a[j] = t; } return a; }
+
+  // Eine Frage zeigen. fertig(richtig) wird nach "Weiter" aufgerufen.
+  function frageZeigen(ober, titel, fr, nr, punkte, fertig) {
+    var antworten = mischen(fr.a.map(function (t, i) { return { t: t, ok: i === 0 }; }));
+    dialog('<div class="ober">' + esc(ober) + '</div><h2 id="blatt-titel">' + esc(titel) + '</h2>' +
+      '<p class="frage">' + esc(fr.q) + '</p><div class="antworten">' +
+      antworten.map(function (a, i) { return '<button type="button" class="antwort" data-i="' + i + '">' + esc(a.t) + '</button>'; }).join('') +
+      '</div><div id="rueck"></div><div class="zeile"><span class="links">' + esc(nr) + '</span><button type="button" class="knopf" id="d-zu">Später</button></div>');
+    blatt.querySelector('#d-zu').addEventListener('click', zu);
+    blatt.querySelectorAll('.antwort').forEach(function (b) {
+      b.addEventListener('click', function () {
+        var wahl = antworten[+b.getAttribute('data-i')];
+        blatt.querySelectorAll('.antwort').forEach(function (x) {
+          x.disabled = true;
+          if (antworten[+x.getAttribute('data-i')].ok) x.classList.add('richtig');
+        });
+        if (!wahl.ok) b.classList.add('falsch');
+        var richtigText = fr.a[0];
+        blatt.querySelector('#rueck').innerHTML = '<div class="rueck ' + (wahl.ok ? 'ok' : 'nein') + '"><b>' +
+          (wahl.ok ? 'Richtig! +' + punkte + ' Punkte für ' + esc(HAEUSER[stand.haus].name) : 'Leider nicht. Richtig ist: ' + esc(richtigText)) +
+          '</b>' + esc(fr.info || '') + '</div>';
+        var zeile = blatt.querySelector('.zeile');
+        zeile.querySelector('#d-zu').remove();
+        var w = document.createElement('button');
+        w.type = 'button'; w.className = 'knopf voll'; w.textContent = 'Weiter';
+        w.addEventListener('click', function () { fertig(wahl.ok); });
+        zeile.appendChild(w);
+        w.focus();
+      });
+    });
+  }
+
+  function ortOeffnen(o) {
+    if (!stand.haus) { startZeigen(); return; }
+    var s = stand.orte[o.id], nr = ORTE.indexOf(o) + 1;
+    if (s.beantwortet >= 3) {
+      dialog('<div class="ober">Ort ' + nr + '</div><h2 id="blatt-titel">' + esc(o.name) + '</h2>' +
+        '<p class="frage">Hier warst du schon: <b>' + s.richtig + ' von 3</b> richtig.</p>' +
+        '<div class="zeile"><button type="button" class="knopf voll" id="d-ok">Weiter erkunden</button></div>');
+      blatt.querySelector('#d-ok').addEventListener('click', zu);
+      return;
+    }
+    var fr = o.fragen[s.beantwortet];
+    frageZeigen('Ort ' + nr + ' · ' + o.name, 'Frage ' + (s.beantwortet + 1) + ' von 3', fr, '', PKT_FRAGE, function (ok) {
+      s.beantwortet++;
+      if (ok) { s.richtig++; stand.punkte += PKT_FRAGE; }
+      anzeigen();
+      if (s.beantwortet < 3) { ortOeffnen(o); return; }
+      var p = P(o.pos[0], o.pos[1], o.pos[2]);
+      funken(p[0], p[1], 18);
+      var alleFertig = ORTE.every(function (x) { return stand.orte[x.id].beantwortet >= 3; });
+      dialog('<div class="ober">Ort ' + nr + ' geschafft</div><h2 id="blatt-titel">Geschafft!</h2>' +
+        '<p class="frage">Der Ort „' + esc(o.name) + '“ leuchtet jetzt. Du hast <b>' + s.richtig + ' von 3</b> richtig.</p>' +
+        '<div class="zeile"><button type="button" class="knopf voll" id="d-ok">' + (alleFertig ? 'Zur Urkunde' : 'Weiter erkunden') + '</button></div>');
+      blatt.querySelector('#d-ok').addEventListener('click', function () {
+        if (alleFertig) { feuerwerk(); urkunde(); } else zu();
+      });
+    });
+  }
+
+  function fundGeklickt(fd) {
+    if (!stand.haus) { startZeigen(); return; }
+    if (stand.funde[fd.id]) return;
+    stand.funde[fd.id] = true;
+    stand.punkte += PKT_FUND;
+    var p = P(fd.pos[0], fd.pos[1], fd.pos[2]);
+    el('circle', { 'class': 'gefunden-ring', cx: p[0], cy: p[1] - 4, r: 13 }, trefferG.parentNode.insertBefore(el('g', {}), trefferG));
+    funken(p[0], p[1] - 4, 14);
+    anzeigen();
+    frageZeigen('Gefunden: ' + fd.name + ' · +' + PKT_FUND + ' Punkte', 'Bonusfrage', fd.frage, '', PKT_BONUS, function (ok) {
+      if (ok) stand.punkte += PKT_BONUS;
+      anzeigen();
+      zu();
+    });
+  }
+
+  function funken(x, y, n) {
+    var farben = ['#ffe08a', '#fff4c2', getComputedStyle(document.documentElement).getPropertyValue('--haus-akzent').trim() || '#e6c372'];
+    for (var i = 0; i < n; i++) {
+      var w = Math.random() * Math.PI * 2, d = 18 + Math.random() * 28;
+      var c = el('circle', { cx: x, cy: y, r: 1.6 + Math.random() * 1.8, fill: farben[i % 3] }, funkenG);
+      c.style.setProperty('--dx', (Math.cos(w) * d).toFixed(1) + 'px');
+      c.style.setProperty('--dy', (Math.sin(w) * d).toFixed(1) + 'px');
+      (function (c) { setTimeout(function () { c.remove(); }, 1200); })(c);
+    }
+  }
+  function feuerwerk() {
+    for (var i = 0; i < 7; i++) (function (i) {
+      setTimeout(function () { funken(200 + Math.random() * 600, 60 + Math.random() * 180, 22); }, i * 260);
+    })(i);
+  }
+
+  function note(anteil) {
+    if (anteil >= 0.9) return ['O', 'Ohnegleichen'];
+    if (anteil >= 0.75) return ['E', 'Erwartungen übertroffen'];
+    if (anteil >= 0.55) return ['A', 'Annehmbar'];
+    if (anteil >= 0.4) return ['M', 'Mies'];
+    if (anteil >= 0.2) return ['S', 'Schrecklich'];
+    return ['T', 'Troll'];
+  }
+  function urkunde() {
+    var h = HAEUSER[stand.haus], n = note(stand.punkte / MAX_PUNKTE);
+    var gefunden = FUNDE.filter(function (f) { return stand.funde[f.id]; }).length;
+    var richtig = ORTE.reduce(function (s, o) { return s + stand.orte[o.id].richtig; }, 0);
+    dialog('<div class="urkunde"><div class="ober">Urkunde der Schule für Hexerei und Zauberei</div>' +
+      '<h2 id="blatt-titel">Rundgang bestanden!</h2>' +
+      '<p>Für das Haus <b>' + esc(h.name) + '</b> wurden <b>' + stand.punkte + ' von ' + MAX_PUNKTE + '</b> Hauspunkten gesammelt.</p>' +
+      '<div class="note">' + n[0] + '</div><div class="note-text">ZAG-Note: ' + esc(n[1]) + '</div>' +
+      '<p>' + richtig + ' von 24 Fragen richtig · ' + gefunden + ' von 5 Fundstücken entdeckt.' +
+      (gefunden < 5 ? '<br>Im Modell ist noch etwas versteckt …' : '') + '</p>' +
+      '<div class="siegel" aria-hidden="true">H</div></div>' +
+      '<div class="zeile">' + (gefunden < 5 ? '<button type="button" class="knopf" id="d-such">Weiter suchen</button>' : '') +
+      '<button type="button" class="knopf voll" id="d-neu">Nochmal spielen</button></div>');
+    var such = blatt.querySelector('#d-such');
+    if (such) such.addEventListener('click', zu);
+    blatt.querySelector('#d-neu').addEventListener('click', function () { neuerStand(); anzeigen(); startZeigen(); });
+  }
+
+  function wappen(h) {
+    return '<svg class="wappen" viewBox="0 0 34 40" aria-hidden="true"><path d="M2 2h30v16c0 10-7 16-15 20C9 34 2 28 2 18z" fill="' + h.akzent +
+      '"/><path d="M5 5h24v13c0 8-5.5 13-12 16.5C10.5 31 5 26 5 18z" fill="' + h.farbe + '"/></svg>';
+  }
+  function startZeigen() {
+    var reihen = Object.keys(HAEUSER).map(function (id) {
+      var h = HAEUSER[id];
+      return '<button type="button" class="haus-wahl" data-haus="' + id + '" style="background:' + h.farbe + ';color:' + h.text + '">' +
+        wappen(h) + esc(h.name) + '<small>' + esc(h.tier) + ' · ' + esc(h.zug) + '</small></button>';
+    }).join('');
+    dialog('<div class="ober">Willkommen in Hogwarts</div><h2 id="blatt-titel">Für welches Haus spielst du?</h2>' +
+      '<p>Acht Orte, drei Fragen pro Ort. Jede richtige Antwort bringt 10 Hauspunkte. ' +
+      'Wer eines der fünf versteckten Dinge im Modell findet, bekommt 5 Punkte und eine Bonusfrage.</p>' +
+      '<div class="haeuser">' + reihen + '</div>' +
+      '<button type="button" class="knopf hut-knopf" id="d-hut">Lass den Sprechenden Hut entscheiden</button>', false);
+    blatt.querySelectorAll('.haus-wahl').forEach(function (b) {
+      b.addEventListener('click', function () { hausSetzen(b.getAttribute('data-haus')); zu(); });
+    });
+    blatt.querySelector('#d-hut').addEventListener('click', function () {
+      var ids = Object.keys(HAEUSER), id = ids[Math.floor(Math.random() * ids.length)];
+      hausSetzen(id);
+      dialog('<div class="ober">Der Hut überlegt …</div><h2 id="blatt-titel">„' + esc(HAEUSER[id].name.toUpperCase()) + '!“</h2>' +
+        '<p class="frage">Willkommen im Haus ' + esc(HAEUSER[id].name) + '. Viel Glück beim Rundgang!</p>' +
+        '<div class="zeile"><button type="button" class="knopf voll" id="d-los">Los geht’s</button></div>');
+      blatt.querySelector('#d-los').addEventListener('click', zu);
+    });
+  }
+
+  document.getElementById('k-neu').addEventListener('click', function () { neuerStand(); anzeigen(); startZeigen(); });
+
+  neuerStand();
+  anzeigen();
+  startZeigen();
+  // Am Handy die Karte mittig zeigen
+  var sc = document.getElementById('scroll');
+  requestAnimationFrame(function () { sc.scrollLeft = (sc.scrollWidth - sc.clientWidth) / 2; });
+})();
+</script>
+</body>
+</html>
