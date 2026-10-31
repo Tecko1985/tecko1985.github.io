@@ -1,2 +1,13 @@
 # Lokales Claude-Projektgedaechtnis, nicht Teil des oeffentlichen Repos
 CLAUDE.md
+
+# Adventskalender: nur verschlüsselte .bin-Dateien ins Repo, nie Originale
+adventskalender/Dateien/
+adventskalender/**/*.jpg
+adventskalender/**/*.jpeg
+adventskalender/**/*.png
+adventskalender/**/*.webp
+adventskalender/**/*.heic
+adventskalender/**/*.mp4
+adventskalender/**/*.mov
+adventskalender/**/*.webm
