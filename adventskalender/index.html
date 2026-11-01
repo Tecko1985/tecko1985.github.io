@@ -1,0 +1,1533 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex">
+<meta name="theme-color" content="#0b1736">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='88'%3E%F0%9F%8E%84%3C/text%3E%3C/svg%3E">
+<title>Adventskalender</title>
+<style>
+  :root {
+    --nacht1: #0b1736;
+    --nacht2: #1b2d5c;
+    --rot: #9e1b23;
+    --rot-dunkel: #6d0f16;
+    --gold: #e8c26a;
+    --gold-hell: #fff1c4;
+    --creme: #fff8ea;
+    --tannengruen: #1f5a3c;
+    --text: #fff8ea;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; min-height: 100%; }
+  body {
+    background: radial-gradient(ellipse at 50% -10%, var(--nacht2) 0%, var(--nacht1) 60%, #050a1c 100%) fixed;
+    color: var(--text);
+    font-family: "Segoe UI", system-ui, -apple-system, Roboto, sans-serif;
+    overflow-x: hidden;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  /* Schnee */
+  #schnee { position: fixed; top: 0; right: 0; bottom: 0; left: 0; pointer-events: none; z-index: 0; }
+  .flocke {
+    position: absolute; top: -10px; border-radius: 50%; background: #fff;
+    animation: fallen linear infinite;
+  }
+  @keyframes fallen {
+    to { transform: translate(var(--drift), 105vh); }
+  }
+
+  main {
+    position: relative; z-index: 1;
+    max-width: 760px; margin: 0 auto;
+    padding: 24px 16px 48px;
+  }
+  header { text-align: center; margin-bottom: 18px; }
+  header .klein { letter-spacing: .25em; text-transform: uppercase; font-size: .8rem; color: var(--gold); }
+  h1 {
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: clamp(2rem, 7vw, 3.2rem); margin: 4px 0 6px;
+    color: var(--gold-hell);
+    text-shadow: 0 2px 0 var(--rot-dunkel), 0 0 24px rgba(232,194,106,.35);
+  }
+  #hinweis {
+    display: inline-block; margin-top: 6px; padding: 8px 16px;
+    background: rgba(255,255,255,.08); border: 1px solid rgba(232,194,106,.4);
+    border-radius: 999px; font-size: .95rem;
+  }
+  #hinweis b { color: var(--gold-hell); }
+  .zuruecksetzen {
+    margin-left: 6px; background: none; border: 1px solid var(--gold); color: var(--gold-hell);
+    border-radius: 999px; padding: 2px 10px; font: inherit; font-size: .8rem; cursor: pointer;
+  }
+
+  /* Die Tafel */
+  .tafel {
+    position: relative;
+    background:
+      radial-gradient(circle at 20% 15%, rgba(255,255,255,.07) 0 2px, transparent 3px) 0 0 / 38px 38px,
+      linear-gradient(160deg, var(--rot) 0%, var(--rot-dunkel) 100%);
+    border: 6px solid var(--gold);
+    border-radius: 18px;
+    padding: 18px;
+    box-shadow: 0 0 0 3px var(--rot-dunkel), 0 20px 50px rgba(0,0,0,.55), inset 0 0 40px rgba(0,0,0,.35);
+  }
+  .tafel::before, .tafel::after {
+    /* Tannenzweige oben */
+    content: ""; position: absolute; top: -26px; width: 120px; height: 46px;
+    background:
+      radial-gradient(circle at 70% 60%, #c4262e 0 7px, transparent 8px),
+      radial-gradient(circle at 45% 70%, var(--gold) 0 6px, transparent 7px),
+      radial-gradient(ellipse at 50% 50%, var(--tannengruen) 0 55%, transparent 56%);
+    filter: drop-shadow(0 3px 3px rgba(0,0,0,.4));
+  }
+  .tafel::before { left: -20px; transform: rotate(-12deg); }
+  .tafel::after { right: -20px; transform: rotate(12deg) scaleX(-1); }
+
+  .raster {
+    position: relative; /* Bezug für offsetLeft/Top in fotoAuslegen() */
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    grid-auto-flow: dense;
+    gap: 3px;
+  }
+  @media (max-width: 560px) {
+    .raster { gap: 2px; }
+    .tafel { padding: 10px; }
+    /* Tannenzweige nicht über den Bildschirmrand schieben */
+    .tafel::before, .tafel::after { width: 90px; height: 36px; top: -20px; }
+    .tafel::before { left: -8px; }
+    .tafel::after { right: -8px; }
+  }
+
+  /* Ein Türchen */
+  .fach {
+    position: relative; aspect-ratio: 1 / 1.1;
+    perspective: 600px;
+    border-radius: 6px;
+    background: radial-gradient(circle at 50% 45%, #fff6d8 0%, #f1d89a 70%, #c99d45 100%);
+    box-shadow: inset 0 3px 10px rgba(0,0,0,.45);
+  }
+  /* 24 groß (2×2), 6/12/18 breit (2×1) — 6 Spalten × 5 Reihen ohne Lücke:
+     20 + 4 + 3×2 = 30. Auch am Handy 6 Spalten, damit das Foto ganz bleibt. */
+  .fach.gross { grid-column: span 2; grid-row: span 2; aspect-ratio: auto; }
+  .fach.breit { grid-column: span 2; aspect-ratio: auto; }
+  /* Safari unter 15 kennt aspect-ratio nicht: Hoehe ueber padding (Gesamtpruefung 01.11. H4-2) */
+  @supports not (aspect-ratio: 1) {
+    .fach::before { content: ""; display: block; padding-top: 110%; }
+    .fach.gross::before, .fach.breit::before { display: none; }
+  }
+  .innen {
+    position: absolute; top: 0; right: 0; bottom: 0; left: 0; display: grid; place-items: center;
+    font-size: clamp(1.4rem, 5vw, 2.2rem); opacity: 0; transition: opacity .3s .5s;
+  }
+  .fach.offen .innen { opacity: 1; }
+
+  .tuer {
+    position: absolute; top: 0; right: 0; bottom: 0; left: 0; cursor: pointer;
+    border: 0; padding: 0; border-radius: 6px;
+    transform-origin: left center;
+    transform-style: preserve-3d;
+    transition: transform .9s cubic-bezier(.3,1.4,.5,1);
+    font: inherit; color: inherit;
+  }
+  .tuer .vorne, .tuer .hinten {
+    position: absolute; top: 0; right: 0; bottom: 0; left: 0; border-radius: 6px;
+    backface-visibility: hidden; -webkit-backface-visibility: hidden;
+  }
+  .tuer .vorne {
+    display: grid; place-items: center;
+    /* Jedes Türchen zeigt sein Stück vom Familienfoto (Lage rechnet fotoAuslegen()) */
+    background:
+      linear-gradient(145deg, rgba(255,255,255,.14), rgba(0,0,0,.18)),
+      var(--foto, none) var(--bx, 0) var(--by, 0) / var(--bw, 600%) var(--bh, auto) no-repeat,
+      var(--farbe, var(--rot));
+    border: 1px solid rgba(232,194,106,.8);
+    box-shadow: 0 2px 0 rgba(0,0,0,.3);
+  }
+  .tuer .vorne::after {
+    /* kleiner Knauf */
+    content: ""; position: absolute; right: 7%; top: 50%; width: 6px; height: 6px;
+    border-radius: 50%; background: var(--gold); box-shadow: 0 1px 1px rgba(0,0,0,.5);
+  }
+  .tuer .vorne { place-items: start; padding: 4px; }
+  .tuer .zahl {
+    font-family: Georgia, "Times New Roman", serif; font-weight: bold;
+    font-size: clamp(.7rem, 3vw, 1.05rem); color: var(--gold-hell); line-height: 1;
+    background: rgba(109,15,22,.88); border: 1.5px solid var(--gold);
+    border-radius: 999px; min-width: 1.9em; padding: .25em .3em; text-align: center;
+    box-shadow: 0 2px 4px rgba(0,0,0,.4);
+  }
+  .tuer .hinten {
+    transform: rotateY(180deg);
+    background: linear-gradient(145deg, #f3e1b5, #d9b974);
+    border: 2px solid rgba(0,0,0,.15);
+  }
+  /* Offen: Tür klappt auf und blendet danach aus, es bleibt nur das Innere */
+  .fach.offen .tuer {
+    transform: rotateY(-115deg); opacity: 0; pointer-events: none;
+    transition: transform .9s cubic-bezier(.3,1.4,.5,1), opacity .35s ease .55s;
+  }
+  .fach.offen { cursor: pointer; }  /* offen: antippen zeigt Bilder und Gewinn nochmal */
+  /* Geschlossene Fächer liegen oben, damit offene Türflügel die Nachbarn nicht verdecken */
+  .fach { z-index: 1; }
+  .fach.offen { z-index: 0; }
+
+
+  /* Ohne Kugel (kein Foto-Schlüssel) abwechselnde Farben */
+  .fach:nth-child(4n+2) .vorne { --farbe: #1f5a3c; }
+  .fach:nth-child(4n+3) .vorne { --farbe: #1b3d7a; }
+  .fach:nth-child(4n+4) .vorne { --farbe: #7a3b12; }
+
+  /* Das gesuchte Türchen blinkt */
+  .fach.dran .tuer .vorne {
+    animation: blinken 1.1s ease-in-out infinite;
+  }
+  @keyframes blinken {
+    0%, 100% { box-shadow: 0 0 0 2px var(--gold), 0 0 10px 2px rgba(255,226,140,.5); filter: brightness(1); }
+    50%      { box-shadow: 0 0 0 4px var(--gold-hell), 0 0 28px 10px rgba(255,226,140,.95); filter: brightness(1.35); }
+  }
+  .fach.dran::after {
+    content: "Tipp mich!"; position: absolute; left: 50%; bottom: -12px; transform: translateX(-50%);
+    white-space: nowrap; font-size: .7rem; font-weight: 700; letter-spacing: .04em;
+    background: var(--gold); color: var(--rot-dunkel); padding: 2px 8px; border-radius: 999px;
+    box-shadow: 0 2px 6px rgba(0,0,0,.4); z-index: 3; pointer-events: none;
+    animation: hopsen 1.1s ease-in-out infinite;
+  }
+  @keyframes hopsen { 50% { transform: translate(-50%, -3px); } }
+
+  .fach.wackeln .tuer { animation: wackeln .45s; }
+  @keyframes wackeln {
+    20% { transform: rotateY(-8deg); } 40% { transform: rotateY(6deg); }
+    60% { transform: rotateY(-4deg); } 80% { transform: rotateY(2deg); }
+  }
+
+  /* Kurze Meldung unten */
+  #toast {
+    position: fixed; left: 50%; bottom: 24px; transform: translate(-50%, 80px);
+    background: rgba(10,18,45,.95); border: 1px solid var(--gold); color: var(--creme);
+    padding: 10px 18px; border-radius: 12px; z-index: 30; max-width: calc(100% - 32px);
+    transition: transform .3s; text-align: center; font-size: .95rem;
+  }
+  #toast.zeigen { transform: translate(-50%, 0); }
+
+  /* Der Gewinn fliegt heraus */
+  #buehne {
+    position: fixed; top: 0; right: 0; bottom: 0; left: 0; z-index: 20; display: none;
+    background: rgba(5,10,28,.0); transition: background .5s;
+  }
+  #buehne.an { display: block; background: rgba(5,10,28,.78); }
+  .karte {
+    position: fixed; top: 0; right: 0; bottom: 0; left: 0; margin: auto;
+    width: min(340px, calc(100vw - 32px)); height: max-content;
+    background: linear-gradient(170deg, var(--creme), #f5e3b8);
+    color: #3a1f12; text-align: center;
+    border-radius: 20px; padding: 26px 22px 22px;
+    border: 4px solid var(--gold);
+    box-shadow: 0 30px 80px rgba(0,0,0,.6), 0 0 60px rgba(232,194,106,.5);
+  }
+  .karte .band {
+    position: absolute; left: 50%; top: -18px; transform: translateX(-50%);
+    background: var(--rot); color: var(--gold-hell); font-weight: 700;
+    padding: 6px 18px; border-radius: 999px; white-space: nowrap;
+    border: 2px solid var(--gold); font-size: .9rem;
+  }
+  .karte .bild { font-size: 4.5rem; line-height: 1; margin: 10px 0 8px; }
+  .karte h2 { font-family: Georgia, serif; margin: 0 0 6px; font-size: 1.6rem; color: var(--rot); }
+  .karte p { margin: 0 0 18px; line-height: 1.45; }
+  .karte button {
+    background: var(--rot); color: var(--gold-hell); border: 0;
+    padding: 12px 26px; border-radius: 999px; font: inherit; font-weight: 700;
+    cursor: pointer; box-shadow: 0 3px 0 var(--rot-dunkel);
+  }
+  .karte button:focus-visible, .tuer:focus-visible { outline: 3px solid #fff; outline-offset: 3px; }
+
+  .karte.foto { width: min(460px, calc(100vw - 32px)); padding: 22px 12px 14px; }
+  .medium { display: grid; place-items: center; min-height: 180px; border-radius: 10px; background: #000; overflow: hidden; }
+  .medium img, .medium video {
+    display: block; width: 100%; max-height: 58vh; object-fit: contain;
+    box-shadow: 0 4px 14px rgba(0,0,0,.35);
+  }
+  .medium .lade { color: var(--gold-hell); font-size: .9rem; padding: 20px; }
+  .blaettern { display: flex; align-items: center; justify-content: center; gap: 14px; margin-top: 10px; }
+  .karte .pfeil {
+    width: 40px; height: 40px; border-radius: 50%; border: 2px solid var(--gold);
+    background: #fff; color: var(--rot); font-size: 1.5rem; line-height: 1; cursor: pointer; padding: 0;
+  }
+  .zaehler { font-weight: 700; min-width: 48px; }
+  .knoepfe { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin-top: 14px; }
+  .knopf {
+    background: var(--rot); color: var(--gold-hell); border: 0; text-decoration: none;
+    padding: 11px 20px; border-radius: 999px; font: inherit; font-weight: 700;
+    cursor: pointer; box-shadow: 0 3px 0 var(--rot-dunkel);
+  }
+  .knopf.hell { background: #fff; color: var(--rot); box-shadow: 0 3px 0 #c9b48a; border: 2px solid var(--gold); }
+  .knopf:focus-visible { outline: 3px solid var(--rot); outline-offset: 3px; }
+  /* Konfetti liegt in der Bühne HINTER der Karte, damit Titel und Text lesbar bleiben */
+  .karte { z-index: 1; }
+  .funke {
+    position: fixed; width: 10px; height: 10px; z-index: 0; pointer-events: none; border-radius: 2px;
+  }
+
+  /* Event-Gutschein als goldenes Ticket */
+  .karte.ticket {
+    background:
+      radial-gradient(circle at 20% 10%, rgba(255,255,255,.55), transparent 45%),
+      linear-gradient(160deg, #fff4cf 0%, #f2cf7a 55%, #d9a744 100%);
+    border: 4px solid var(--rot);
+    outline: 2px dashed rgba(109,15,22,.45); outline-offset: -12px;
+    overflow: visible;
+  }
+  .ticket-kopf {
+    font-size: .75rem; font-weight: 800; letter-spacing: .35em; text-transform: uppercase;
+    color: var(--rot-dunkel); margin-top: 6px;
+  }
+  .karte.ticket .bild { font-size: 5rem; filter: drop-shadow(0 6px 8px rgba(0,0,0,.25)); }
+  .karte.ticket h2 { color: var(--rot-dunkel); }
+  .karte.ticket .mit { margin: -8px 0 8px; font-weight: 800; color: var(--rot-dunkel); }
+  .abriss { border-top: 2px dashed rgba(109,15,22,.5); margin: 0 -10px 14px; }
+  .stempel {
+    position: absolute; right: 12px; top: 64px; transform: rotate(-14deg);
+    border: 4px double #b3121d; color: #b3121d; border-radius: 10px;
+    padding: 4px 12px; font-weight: 900; font-size: 1.3rem; letter-spacing: .12em; text-transform: uppercase;
+    background: rgba(255,255,255,.35); display: none; pointer-events: none; line-height: 1.1;
+  }
+  .stempel small { display: block; font-size: .8rem; letter-spacing: .05em; }
+  .stempel.da { display: block; }
+  .einloesen { background: #1f7a3d; box-shadow: 0 3px 0 #145228; color: #fff; }
+  .regen { position: fixed; top: 0; z-index: 0; pointer-events: none; line-height: 1; }
+
+  /* Heiligabend-Finale: Geschenk zum Auspacken */
+  .karte.finale { padding-top: 30px; overflow: visible; }
+  .fin-tipp { font-weight: 800; color: var(--rot); margin: 0 0 6px; animation: hopsen2 1.1s ease-in-out infinite; }
+  @keyframes hopsen2 { 50% { transform: translateY(-4px); } }
+  .karte .geschenk {
+    position: relative; display: block; width: 170px; height: 170px; margin: 0 auto 6px;
+    background: none; border: 0; padding: 0; cursor: pointer; font: inherit;
+    border-radius: 0; box-shadow: none;
+    animation: bibbern 2.2s ease-in-out infinite;
+  }
+  @keyframes bibbern {
+    0%, 70%, 100% { transform: rotate(0); }
+    74% { transform: rotate(-5deg); } 78% { transform: rotate(5deg); }
+    82% { transform: rotate(-3deg); } 86% { transform: rotate(2deg); }
+  }
+  .geschenk .kiste, .geschenk .deckel {
+    position: absolute; left: 50%; transform: translateX(-50%);
+    background:
+      linear-gradient(90deg, transparent 42%, var(--gold) 42% 58%, transparent 58%),
+      linear-gradient(160deg, #c4262e, #8a141b);
+    border-radius: 8px; box-shadow: 0 6px 14px rgba(0,0,0,.35);
+  }
+  .geschenk .kiste { bottom: 0; width: 130px; height: 100px;
+    background:
+      linear-gradient(90deg, transparent 42%, var(--gold) 42% 58%, transparent 58%),
+      repeating-linear-gradient(45deg, rgba(255,255,255,.08) 0 8px, transparent 8px 16px),
+      linear-gradient(160deg, #c4262e, #8a141b); }
+  .geschenk .deckel { bottom: 96px; width: 146px; height: 30px; z-index: 2;
+    transition: transform .7s cubic-bezier(.3,1.2,.5,1), opacity .5s ease .35s; }
+  .geschenk .schleife { position: absolute; left: 50%; top: -26px; width: 0; height: 0; }
+  .geschenk .schleife::before, .geschenk .schleife::after {
+    content: ""; position: absolute; top: 0; width: 40px; height: 28px;
+    border: 7px solid var(--gold); border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%;
+    box-shadow: 0 2px 3px rgba(0,0,0,.25);
+  }
+  .geschenk .schleife::before { right: 0; transform: rotate(-18deg); }
+  .geschenk .schleife::after { left: 0; transform: rotate(18deg); }
+  .geschenk .strahlen {
+    position: absolute; left: 50%; bottom: 60px; width: 10px; height: 10px; border-radius: 50%;
+    transform: translate(-50%, 50%) scale(0); opacity: 0;
+    background: repeating-conic-gradient(rgba(255,226,140,.9) 0 8deg, transparent 8deg 22deg);
+    transition: transform 1.2s cubic-bezier(.2,.8,.3,1), opacity .4s;
+  }
+  .fin-text { position: relative; z-index: 3; max-height: 0; overflow: hidden; opacity: 0; transition: max-height .8s ease .5s, opacity .6s ease .7s; }
+  .fin-namen { font-weight: 700; color: var(--rot-dunkel); letter-spacing: .05em; }
+  .karte.finale.auf .fin-tipp { visibility: hidden; }
+  .karte.finale.auf .geschenk { animation: none; cursor: default; }
+  .karte.finale.auf .deckel { transform: translate(-50%, -150px) rotate(-38deg); opacity: 0; }
+  .karte.finale.auf .strahlen { transform: translate(-50%, 50%) scale(26); opacity: 1; }
+  .karte.finale.auf .fin-text { max-height: 320px; opacity: 1; }
+  .karte.finale h2 { font-size: 2rem; }
+
+  footer { text-align: center; margin-top: 30px; font-size: .8rem; opacity: .6; }
+
+  /* ════════ Verschönerung (alles inline, nichts von außen) ════════ */
+  main { padding-top: 66px; padding-bottom: 160px; }
+  header { margin-bottom: 36px; }
+  header .klein::before, header .klein::after { content: "✦"; margin: 0 .8em; color: var(--gold-hell); opacity: .85; }
+  h1 {
+    background: linear-gradient(100deg, #b8802e 0%, #fff1c4 20%, #e8c26a 38%, #fffaf0 50%, #e8c26a 62%, #fff1c4 80%, #b8802e 100%);
+    background-size: 200% auto;
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+    text-shadow: none;
+    filter: drop-shadow(0 2px 0 var(--rot-dunkel)) drop-shadow(0 0 18px rgba(232,194,106,.35));
+    animation: glanz 8s linear infinite;
+  }
+  @keyframes glanz { from { background-position: 0% center; } to { background-position: 200% center; } }
+  #hinweis {
+    background: linear-gradient(180deg, rgba(255,255,255,.13), rgba(255,255,255,.04));
+    -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px);
+    box-shadow: 0 6px 20px rgba(0,0,0,.28), inset 0 1px 0 rgba(255,255,255,.18);
+  }
+  footer { text-shadow: 0 1px 3px rgba(0,0,0,.8); }
+
+  /* Lichterkette oben */
+  .lichterkette { position: absolute; left: 0; right: 0; top: 0; height: 60px; z-index: 2; pointer-events: none; overflow: hidden; }
+  .lichterkette svg { position: absolute; top: 0; right: 0; bottom: 0; left: 0; width: 100%; height: 100%; }
+  .birne {
+    position: absolute; width: 9px; height: 15px; margin-left: -4.5px;
+    border-radius: 50% 50% 45% 45% / 60% 60% 40% 40%;
+    background: radial-gradient(circle at 40% 35%, #fff 0 12%, var(--c) 45%);
+    box-shadow: 0 0 8px 2px var(--c), 0 0 22px 5px color-mix(in srgb, var(--c) 45%, transparent);
+    transform-origin: 50% 0; animation: funkeln 2.4s ease-in-out infinite;
+  }
+  .birne::before { content: ""; position: absolute; left: 1.5px; top: -4px; width: 6px; height: 5px; border-radius: 1.5px; background: #3a3f4a; }
+  @keyframes funkeln { 0%, 100% { opacity: 1; } 50% { opacity: .35; } }
+
+  /* Mond und Winterlandschaft */
+  .mond {
+    position: fixed; top: 74px; right: 7%; width: 64px; height: 64px; border-radius: 50%; z-index: 0; pointer-events: none;
+    background:
+      radial-gradient(circle at 64% 58%, rgba(180,160,110,.32) 0 7px, transparent 8px),
+      radial-gradient(circle at 36% 70%, rgba(180,160,110,.28) 0 4px, transparent 5px),
+      radial-gradient(circle at 55% 30%, rgba(180,160,110,.22) 0 3px, transparent 4px),
+      radial-gradient(circle at 40% 36%, #fffdf2, #f1e3bd 62%, #d3bd88);
+    box-shadow: 0 0 40px 10px rgba(255,240,200,.16), 0 0 140px 50px rgba(255,240,200,.07);
+  }
+  .landschaft { position: fixed; left: 0; right: 0; bottom: 0; height: clamp(110px, 20vh, 190px); z-index: 0; pointer-events: none; }
+  .landschaft svg { display: block; width: 100%; height: 100%; }
+
+  /* Rahmen: Goldverlauf, Schleife, echte Tannenzweige */
+  .tafel {
+    border: 6px solid transparent;
+    background:
+      radial-gradient(circle at 20% 15%, rgba(255,255,255,.07) 0 2px, transparent 3px) 0 0 / 38px 38px padding-box,
+      linear-gradient(160deg, var(--rot) 0%, var(--rot-dunkel) 100%) padding-box,
+      linear-gradient(135deg, #f8e4a8, #b8862f 25%, #fff1c4 50%, #b8862f 75%, #e8c26a) border-box;
+    box-shadow: 0 0 0 3px var(--rot-dunkel), 0 0 0 5px rgba(232,194,106,.45),
+                0 24px 60px rgba(0,0,0,.6), inset 0 0 0 2px rgba(255,241,196,.25), inset 0 0 40px rgba(0,0,0,.35);
+  }
+  .tafel::before, .tafel::after {
+    top: -30px; width: 130px; height: 54px; filter: drop-shadow(0 4px 4px rgba(0,0,0,.45));
+    background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 130 54'%3E%3Cg stroke='%232f7d52' stroke-width='3.5' stroke-dasharray='1.2 2.4' fill='%231c5236'%3E%3Cellipse cx='32' cy='28' rx='31' ry='10' transform='rotate(-10 32 28)'/%3E%3Cellipse cx='98' cy='30' rx='30' ry='9' transform='rotate(8 98 30)'/%3E%3Cellipse cx='64' cy='22' rx='30' ry='10' transform='rotate(3 64 22)' fill='%23226343'/%3E%3C/g%3E%3Cpath d='M8 32 Q64 20 122 34' stroke='%23143d28' stroke-width='2' fill='none'/%3E%3Crect x='53' y='24' width='6' height='5' rx='1' fill='%23e8c26a'/%3E%3Ccircle cx='56' cy='37' r='9' fill='%23c4262e'/%3E%3Ccircle cx='53' cy='34' r='3' fill='%23fff' opacity='.55'/%3E%3Ccircle cx='82' cy='39' r='7' fill='%23e8c26a'/%3E%3Ccircle cx='80' cy='37' r='2.2' fill='%23fff' opacity='.6'/%3E%3Cg fill='%23d4202a'%3E%3Ccircle cx='34' cy='36' r='3'/%3E%3Ccircle cx='40' cy='39' r='3'/%3E%3Ccircle cx='33' cy='42' r='2.6'/%3E%3C/g%3E%3C/svg%3E") center / contain no-repeat;
+  }
+  .schleife {
+    position: absolute; left: 50%; top: -40px; width: 92px; height: 62px; transform: translateX(-50%); z-index: 3; pointer-events: none;
+    filter: drop-shadow(0 4px 5px rgba(0,0,0,.45));
+    background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 92 62'%3E%3Cdefs%3E%3ClinearGradient id='r' x1='0' y1='0' x2='0' y2='1'%3E%3Cstop offset='0' stop-color='%23d63a40'/%3E%3Cstop offset='1' stop-color='%238f141b'/%3E%3C/linearGradient%3E%3C/defs%3E%3Cg stroke='%23e8c26a' stroke-width='2' stroke-linejoin='round' fill='url(%23r)'%3E%3Cpath d='M43 34 L30 60 L37 56 L41 61 L49 35Z'/%3E%3Cpath d='M49 34 L62 60 L55 56 L51 61 L43 35Z'/%3E%3Cpath d='M46 30 C32 4 6 6 8 22 C10 36 32 36 46 30Z'/%3E%3Cpath d='M46 30 C60 4 86 6 84 22 C82 36 60 36 46 30Z'/%3E%3Crect x='39' y='23' width='14' height='14' rx='5'/%3E%3C/g%3E%3Cpath d='M14 20 C20 14 30 14 38 24 M78 20 C72 14 62 14 54 24' stroke='%23fff' stroke-opacity='.35' stroke-width='2' fill='none'/%3E%3C/svg%3E") center / contain no-repeat;
+  }
+
+  /* Foto wärmer, Ränder leicht abgedunkelt (helle Wand wirkt nicht mehr leer) */
+  .raster::after {
+    content: ""; position: absolute; top: 0; right: 0; bottom: 0; left: 0; z-index: 2; pointer-events: none; border-radius: 6px;
+    background:
+      radial-gradient(ellipse at 50% 55%, transparent 50%, rgba(60,12,4,.42) 100%),
+      linear-gradient(180deg, rgba(255,190,110,.10), rgba(120,40,10,.10));
+    mix-blend-mode: multiply;
+  }
+  .tuer .vorne {
+    background:
+      linear-gradient(145deg, rgba(255,236,190,.12), rgba(40,8,0,.22)),
+      var(--foto, none) var(--bx, 0) var(--by, 0) / var(--bw, 600%) var(--bh, auto) no-repeat,
+      var(--farbe, var(--rot));
+    border: 1px solid rgba(240,205,130,.7);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.28), inset 0 -2px 5px rgba(0,0,0,.25), 0 2px 0 rgba(0,0,0,.3);
+  }
+  .tuer .zahl {
+    background: radial-gradient(circle at 35% 30%, #c4343d, #6d0f16 75%);
+    border-color: #f3d389; text-shadow: 0 1px 0 rgba(0,0,0,.45);
+    box-shadow: 0 2px 5px rgba(0,0,0,.45), inset 0 1px 0 rgba(255,255,255,.28);
+  }
+  .tuer .vorne::after {
+    width: 8px; height: 8px; margin-top: -4px;
+    background: radial-gradient(circle at 35% 35%, #fff4cf, #d9a93f 60%, #8a6420);
+    box-shadow: 0 1px 2px rgba(0,0,0,.6);
+  }
+
+  /* Offenes Fach: leuchtet, Gewinn-Emoji hüpft herein */
+  .fach { background: radial-gradient(circle at 50% 45%, #fffbea 0%, #f6dd9e 55%, #c99d45 100%); }
+  .innen { background: radial-gradient(circle at 50% 50%, rgba(255,255,255,.75), transparent 58%); border-radius: 6px; }
+  .fach.offen .innen .bild { display: inline-block; filter: drop-shadow(0 3px 3px rgba(0,0,0,.3)); animation: hopp .7s .55s both cubic-bezier(.3,1.6,.5,1); }
+  @keyframes hopp { from { transform: scale(.2) rotate(-20deg); } to { transform: scale(1) rotate(0); } }
+  .fach::before {
+    content: ""; position: absolute; top: -12px; right: -12px; bottom: -12px; left: -12px; border-radius: 16px; z-index: 3; pointer-events: none; opacity: 0;
+    background: radial-gradient(circle, rgba(255,244,200,.95) 0%, rgba(255,215,120,.55) 35%, transparent 70%);
+  }
+  .fach.aufgehend::before { animation: lichtstoss 1s ease-out .12s; }
+  @keyframes lichtstoss { 0% { opacity: 0; transform: scale(.6); } 30% { opacity: 1; } 100% { opacity: 0; transform: scale(1.5); } }
+
+  /* Gewinnkarte: Zierrahmen, drehende Strahlen hinter dem Gewinn */
+  .karte::before {
+    content: ""; position: absolute; top: 7px; right: 7px; bottom: 7px; left: 7px; border: 1.5px dashed rgba(158,27,35,.28);
+    border-radius: 14px; pointer-events: none;
+  }
+  .karte .bild { position: relative; isolation: isolate; animation: schweben 2.8s ease-in-out infinite; }
+  .karte .bild::before {
+    content: ""; position: absolute; left: 50%; top: 50%; width: 180px; height: 180px; margin: -90px 0 0 -90px;
+    z-index: -1; border-radius: 50%;
+    background: repeating-conic-gradient(from 0deg, rgba(232,194,106,.6) 0 9deg, transparent 9deg 22.5deg);
+    -webkit-mask: radial-gradient(circle, #000 22%, transparent 68%); mask: radial-gradient(circle, #000 22%, transparent 68%);
+    animation: drehen 16s linear infinite;
+  }
+  @keyframes drehen { to { transform: rotate(1turn); } }
+  @keyframes schweben { 50% { transform: translateY(-5px); } }
+  .karte h2 { letter-spacing: .01em; }
+  .karte button, .knopf { transition: transform .15s, box-shadow .15s; }
+  .karte button:hover, .knopf:hover { transform: translateY(-1px); }
+  .karte button:active, .knopf:active { transform: translateY(2px); box-shadow: 0 1px 0 var(--rot-dunkel); }
+
+  /* ════════ Runde 2 ════════ */
+  /* Schnee liegt auf dem Rahmen */
+  .tafel::before, .tafel::after { z-index: 3; }
+  .schneekante {
+    position: absolute; left: 12px; right: 12px; top: -10px; height: 20px; z-index: 2; pointer-events: none;
+    /* weiche, unregelmäßige Unterkante: drei überlappende Bogenreihen */
+    background:
+      radial-gradient(circle at 50% 4px, #f4f8ff 0 11px, transparent 11.5px) 0 0 / 17px 20px repeat-x,
+      radial-gradient(circle at 50% 6px, #f4f8ff 0 11px, transparent 11.5px) 7px 0 / 29px 20px repeat-x,
+      radial-gradient(circle at 50% 9px, #eef3fd 0 7px, transparent 7.5px) 19px 0 / 47px 20px repeat-x,
+      linear-gradient(#ffffff, #f4f8ff) 0 0 / 100% 10px no-repeat;
+    border-radius: 10px 10px 0 0;
+    filter: drop-shadow(0 2px 2px rgba(0,0,0,.28));
+  }
+
+  /* Das gesuchte Türchen liegt ganz oben, damit „Tipp mich!“ nicht verdeckt wird */
+  .fach.dran { z-index: 4; }
+
+  /* Türchen 24: das große Goldene */
+  .fach.gross .tuer .vorne {
+    border: 2px solid #f6d77f;
+    box-shadow: inset 0 0 0 2px rgba(255,241,196,.35), inset 0 0 30px rgba(255,200,90,.25), 0 0 16px rgba(255,215,120,.35);
+  }
+  .fach.gross .tuer .zahl {
+    font-size: clamp(1rem, 4.5vw, 1.6rem); color: var(--rot-dunkel); text-shadow: 0 1px 0 rgba(255,255,255,.5);
+    background: radial-gradient(circle at 35% 30%, #fff8dc, #e8c26a 55%, #a87526); border-color: #fff1c4;
+  }
+  .fach.gross .tuer .vorne::before {
+    content: "★"; position: absolute; right: 7%; top: 5%; color: #ffe9a8; font-size: clamp(1.1rem, 4.5vw, 1.8rem); line-height: 1;
+    text-shadow: 0 0 10px rgba(255,220,130,.95), 0 0 2px #a87526; animation: stern 3s ease-in-out infinite;
+  }
+  @keyframes stern { 50% { transform: scale(1.2) rotate(18deg); opacity: .85; } }
+
+  /* Am PC: Türchen geht beim Drüberfahren einen Spalt auf */
+  @media (hover: hover) {
+    .fach:not(.offen):hover .tuer { transform: rotateY(-14deg); }
+  }
+
+  /* Sternenhimmel, Sternschnuppe */
+  #himmel { position: fixed; top: 0; right: 0; bottom: 0; left: 0; z-index: 0; pointer-events: none; }
+  .stern {
+    position: absolute; border-radius: 50%; background: #fff;
+    box-shadow: 0 0 4px 1px rgba(255,255,255,.6); animation: blinzeln 3s ease-in-out infinite;
+  }
+  @keyframes blinzeln { 50% { opacity: .15; transform: scale(.6); } }
+  .sternschnuppe {
+    position: absolute; width: 130px; height: 2px; border-radius: 2px; opacity: 0;
+    background: linear-gradient(90deg, rgba(255,255,255,0), #fff 85%, #fffbe6);
+    filter: drop-shadow(0 0 4px #fff);
+    animation: schnuppe 9s ease-in infinite 2s;
+  }
+  @keyframes schnuppe {
+    0%   { opacity: 0; transform: rotate(22deg) translateX(0); }
+    2%   { opacity: 1; }
+    9%   { opacity: 0; transform: rotate(22deg) translateX(360px); }
+    100% { opacity: 0; transform: rotate(22deg) translateX(360px); }
+  }
+
+  /* Rauch aus dem Schornstein */
+  .rauch { fill: #c9d4ec; opacity: 0; transform-box: fill-box; transform-origin: center; animation: rauchen 4.5s ease-out infinite; }
+  @keyframes rauchen {
+    0% { opacity: 0; transform: translate(0, 0) scale(.5); }
+    20% { opacity: .5; }
+    100% { opacity: 0; transform: translate(14px, -38px) scale(1.8); }
+  }
+
+  /* Adventskranz */
+  .kranz { margin: 46px auto 0; width: 270px; text-align: center; }
+  .kranz-bild { position: relative; height: 128px; }
+  .kranz-bild svg { position: absolute; left: 0; bottom: 0; width: 100%; height: 64px; overflow: visible; }
+  .kerze {
+    position: absolute; bottom: 30px; width: 20px; margin-left: -10px; border-radius: 3px 3px 5px 5px;
+    background: linear-gradient(90deg, #7c0f15, #c92a33 30%, #ff7a7a 48%, #d8343c 62%, #7c0f15);
+    box-shadow: inset 0 3px 0 rgba(255,255,255,.22), 0 4px 6px rgba(0,0,0,.35);
+  }
+  .kerze::before { content: ""; position: absolute; left: 50%; top: -7px; width: 2px; height: 8px; margin-left: -1px; background: #2b1a10; border-radius: 1px; }
+  .kerze::after {  /* Wachsnase */
+    content: ""; position: absolute; left: 3px; top: 0; width: 5px; height: 14px; border-radius: 0 0 4px 4px; background: #e5454d;
+  }
+  .flamme {
+    position: absolute; left: 50%; top: -30px; width: 13px; height: 22px; margin-left: -6.5px; display: none;
+    border-radius: 50% 50% 50% 50% / 62% 62% 38% 38%;
+    background: radial-gradient(ellipse at 50% 72%, #fff 0 18%, #ffe27a 42%, #ff9a2a 72%, rgba(255,120,30,0) 76%);
+    box-shadow: 0 0 18px 6px rgba(255,190,80,.5), 0 0 60px 22px rgba(255,170,60,.18);
+    transform-origin: 50% 90%; animation: flackern 1.7s ease-in-out infinite;
+  }
+  .kerze.an .flamme { display: block; }
+  @keyframes flackern {
+    0%, 100% { transform: scaleY(1) rotate(-2deg); }
+    25% { transform: scaleY(1.12) rotate(2deg); }
+    50% { transform: scaleY(.93) rotate(-1deg); }
+    75% { transform: scaleY(1.06) rotate(3deg); }
+  }
+  .kranz-text {
+    margin-top: 10px; font-family: Georgia, "Times New Roman", serif; font-size: 1.15rem;
+    color: var(--gold-hell); text-shadow: 0 1px 0 var(--rot-dunkel), 0 0 14px rgba(232,194,106,.4);
+  }
+
+  /* Glitzer beim Antippen */
+  .glitzer {
+    position: fixed; z-index: 40; pointer-events: none; color: #ffe9a8; font-size: 14px; line-height: 1;
+    text-shadow: 0 0 6px rgba(255,220,130,.9);
+  }
+
+  @media (max-width: 560px) {
+    .schneekante { left: 8px; right: 8px; top: -9px; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .stern, .sternschnuppe, .rauch, .flamme, .fach.gross .tuer .vorne::before { animation: none !important; }
+    .sternschnuppe { display: none; }
+  }
+
+  /* ════════ Runde 3 ════════ */
+  /* Nordlicht ganz zart hinter den Sternen */
+  .nordlicht {
+    position: absolute; left: -10%; right: -10%; top: 0; height: 60vh; pointer-events: none;
+    background:
+      radial-gradient(ellipse 45% 28% at 28% 26%, rgba(70,230,170,.13), transparent 70%),
+      radial-gradient(ellipse 40% 22% at 72% 16%, rgba(150,110,255,.11), transparent 70%),
+      radial-gradient(ellipse 30% 18% at 52% 34%, rgba(80,180,255,.08), transparent 70%);
+    filter: blur(18px); animation: wabern 22s ease-in-out infinite alternate;
+  }
+  @keyframes wabern {
+    from { transform: translateX(-3%) skewX(-4deg); opacity: .7; }
+    to   { transform: translateX(3%) skewX(4deg); opacity: 1; }
+  }
+
+  /* Große, unscharfe Flocken ganz vorne (Tiefe) */
+  .flocke.vorn { background: none; color: #fff; filter: blur(1.4px); line-height: 1; border-radius: 0; }
+
+  /* Offene Fächer zeigen weiter ihre Nummer */
+  .innen .tag-nr {
+    position: absolute; left: 5px; top: 4px; font-family: Georgia, "Times New Roman", serif; font-weight: bold;
+    font-size: clamp(.6rem, 2.4vw, .85rem); color: var(--rot-dunkel); opacity: .7;
+  }
+  .fach.offen .innen { box-shadow: inset 0 4px 12px rgba(120,70,10,.35); }
+
+  /* Fotos als Polaroid mit Klebestreifen und Unterschrift */
+  .karte.foto .medium {
+    position: relative; background: #fff; padding: 10px 10px 42px; border-radius: 3px; min-height: 200px;
+    transform: rotate(-1.3deg); box-shadow: 0 12px 26px rgba(0,0,0,.35), 0 2px 4px rgba(0,0,0,.2); overflow: visible;
+  }
+  .karte.foto .medium img, .karte.foto .medium video { max-height: 52vh; box-shadow: none; background: #000; }
+  .karte.foto .medium::before {
+    content: ""; position: absolute; top: -11px; left: 50%; width: 92px; height: 24px; margin-left: -46px; z-index: 1;
+    background: rgba(255,246,214,.78); transform: rotate(2.5deg); box-shadow: 0 1px 3px rgba(0,0,0,.18);
+  }
+  .karte.foto .medium::after {
+    content: attr(data-unterschrift); position: absolute; left: 0; right: 0; bottom: 10px;
+    font-family: "Segoe Print", "Bradley Hand", "Comic Sans MS", cursive; font-size: 1.02rem; color: #3a2a20;
+  }
+  .medium .lade { color: var(--rot); }
+  .karte.foto .blaettern { margin-top: 14px; }
+
+  /* Tannenzweig an der Ecke der Karten */
+  .karte::after {
+    content: ""; position: absolute; top: -16px; left: -18px; width: 86px; height: 36px; transform: rotate(-20deg);
+    filter: drop-shadow(0 3px 3px rgba(0,0,0,.35)); pointer-events: none;
+    background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 130 54'%3E%3Cg stroke='%232f7d52' stroke-width='3.5' stroke-dasharray='1.2 2.4' fill='%231c5236'%3E%3Cellipse cx='32' cy='28' rx='31' ry='10' transform='rotate(-10 32 28)'/%3E%3Cellipse cx='98' cy='30' rx='30' ry='9' transform='rotate(8 98 30)'/%3E%3Cellipse cx='64' cy='22' rx='30' ry='10' transform='rotate(3 64 22)' fill='%23226343'/%3E%3C/g%3E%3Cpath d='M8 32 Q64 20 122 34' stroke='%23143d28' stroke-width='2' fill='none'/%3E%3Crect x='53' y='24' width='6' height='5' rx='1' fill='%23e8c26a'/%3E%3Ccircle cx='56' cy='37' r='9' fill='%23c4262e'/%3E%3Ccircle cx='53' cy='34' r='3' fill='%23fff' opacity='.55'/%3E%3Ccircle cx='82' cy='39' r='7' fill='%23e8c26a'/%3E%3Ccircle cx='80' cy='37' r='2.2' fill='%23fff' opacity='.6'/%3E%3Cg fill='%23d4202a'%3E%3Ccircle cx='34' cy='36' r='3'/%3E%3Ccircle cx='40' cy='39' r='3'/%3E%3Ccircle cx='33' cy='42' r='2.6'/%3E%3C/g%3E%3C/svg%3E") center / contain no-repeat;
+  }
+
+  /* Kranz wirft warmes Licht, je mehr Kerzen brennen */
+  .kranz-bild::before {
+    content: ""; position: absolute; left: 50%; bottom: 20px; width: 340px; height: 190px; margin-left: -170px;
+    background: radial-gradient(ellipse at 50% 60%, rgba(255,190,90,.30), transparent 65%);
+    opacity: var(--glut, 0); pointer-events: none;
+  }
+
+  /* Familie: wer ist heute dran */
+  footer { opacity: 1; margin-top: 34px; }
+  .familie { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; margin-bottom: 10px; }
+  .name {
+    display: inline-flex; align-items: center; gap: 7px; padding: 4px 13px 4px 4px; border-radius: 999px;
+    background: rgba(255,255,255,.07); border: 1px solid rgba(232,194,106,.35); font-size: .92rem; color: var(--creme);
+    -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px);
+  }
+  .name b {
+    width: 25px; height: 25px; border-radius: 50%; display: grid; place-items: center;
+    background: radial-gradient(circle at 35% 30%, #c4343d, #6d0f16 75%); border: 1.5px solid #f3d389;
+    font-family: Georgia, serif; font-size: .8rem; color: var(--gold-hell);
+  }
+  .name.heute {
+    background: linear-gradient(135deg, rgba(232,194,106,.38), rgba(232,194,106,.12));
+    border-color: var(--gold); box-shadow: 0 0 18px rgba(232,194,106,.45); font-weight: 700;
+  }
+  .name.heute b { background: radial-gradient(circle at 35% 30%, #fff8dc, #e8c26a 55%, #a87526); color: var(--rot-dunkel); }
+  .name.heute::after { content: "heute"; font-size: .68rem; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; color: var(--gold-hell); }
+  .fussnote { font-size: .78rem; opacity: .55; }
+
+  @media (max-width: 420px) {
+    .familie { gap: 6px; }
+    .name { font-size: .85rem; padding-right: 10px; gap: 5px; }
+    .name.heute::after { content: none; }   /* am Handy reicht das Leuchten */
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .nordlicht { animation: none; }
+  }
+
+  @media (max-width: 560px) {
+    main { padding-top: 58px; }
+    .mond { width: 34px; height: 34px; top: 56px; right: 4%; }
+    .tafel::before, .tafel::after { width: 92px; height: 38px; top: -22px; }
+    .schleife { width: 70px; height: 47px; top: -31px; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    h1, .birne, .karte .bild, .karte .bild::before, .fach.offen .innen .bild, .fach.aufgehend::before { animation: none !important; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .flocke { display: none; }
+    .fach.dran .tuer .vorne { animation: none; box-shadow: 0 0 0 4px var(--gold-hell), 0 0 24px 8px rgba(255,226,140,.9); }
+    .fach.dran::after { animation: none; }
+  }
+</style>
+</head>
+<body>
+<div id="himmel" aria-hidden="true"><div class="nordlicht"></div><div class="sternschnuppe"></div></div>
+<div class="mond" aria-hidden="true"></div>
+<div class="landschaft" aria-hidden="true">
+  <svg viewBox="0 0 1200 200" preserveAspectRatio="xMidYMax slice">
+    <defs>
+      <linearGradient id="schneeVorn" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#dfe7f7"/><stop offset="1" stop-color="#93a6d0"/></linearGradient>
+      <radialGradient id="fensterGlow"><stop offset="0" stop-color="#ffd27a" stop-opacity=".55"/><stop offset="1" stop-color="#ffd27a" stop-opacity="0"/></radialGradient>
+      <g id="baum"><path d="M0 -50 L-17 -26 L17 -26Z M0 -38 L-21 -12 L21 -12Z M0 -24 L-24 2 L24 2Z" fill="#0d3326"/><path d="M0 -50 L-7 -40 L7 -40Z M-17 -26 L-8 -29 L0 -26 L9 -29 L17 -26Z M-21 -12 L-10 -15 L0 -12 L10 -15 L21 -12Z" fill="#eef3fb" opacity=".9"/></g>
+      <g id="baumFern"><path d="M0 -34 L-12 0 L12 0Z" fill="#0e1d44"/></g>
+    </defs>
+    <path d="M0 115 C180 70 360 85 540 105 C720 125 880 60 1200 90 L1200 200 L0 200Z" fill="#17295a"/>
+    <use href="#baumFern" x="140" y="92"/><use href="#baumFern" x="170" y="90"/><use href="#baumFern" x="330" y="92"/>
+    <use href="#baumFern" x="900" y="80"/><use href="#baumFern" x="930" y="78"/><use href="#baumFern" x="1090" y="84"/>
+    <path d="M0 140 C200 120 420 128 600 138 C800 150 980 118 1200 128 L1200 200 L0 200Z" fill="#20367a"/>
+    <circle cx="540" cy="130" r="30" fill="url(#fensterGlow)"/>
+    <circle cx="610" cy="118" r="34" fill="url(#fensterGlow)"/>
+    <circle cx="682" cy="132" r="26" fill="url(#fensterGlow)"/>
+    <circle class="rauch" cx="553" cy="96" r="4"/>
+    <circle class="rauch" cx="553" cy="96" r="4" style="animation-delay:1.5s"/>
+    <circle class="rauch" cx="553" cy="96" r="4" style="animation-delay:3s"/>
+    <rect x="549" y="98" width="8" height="14" fill="#0f1d45"/><rect x="548" y="97" width="10" height="3" fill="#e6edf9"/>
+    <rect x="520" y="118" width="40" height="28" fill="#0f1d45"/><path d="M514 120 L540 98 L566 120Z" fill="#e6edf9"/>
+    <rect x="528" y="126" width="8" height="8" fill="#ffd27a"/><rect x="545" y="126" width="8" height="8" fill="#ffd27a"/>
+    <rect x="585" y="96" width="20" height="50" fill="#0f1d45"/><path d="M581 98 L595 66 L609 98Z" fill="#e6edf9"/>
+    <path d="M595 50 V64 M590 55 H600" stroke="#e8c26a" stroke-width="2"/>
+    <rect x="591" y="106" width="8" height="12" rx="4" fill="#ffd27a"/>
+    <rect x="605" y="114" width="44" height="32" fill="#0f1d45"/><path d="M601 116 L627 98 L653 116Z" fill="#e6edf9"/>
+    <rect x="613" y="122" width="7" height="11" rx="3.5" fill="#ffd27a"/><rect x="633" y="122" width="7" height="11" rx="3.5" fill="#ffd27a"/>
+    <rect x="665" y="122" width="34" height="24" fill="#0f1d45"/><path d="M660 124 L682 106 L704 124Z" fill="#e6edf9"/>
+    <rect x="676" y="130" width="10" height="9" fill="#ffd27a"/>
+    <!-- Höfe links und rechts, damit am PC (Mitte von der Tafel verdeckt) auch Häuser zu sehen sind -->
+    <circle cx="250" cy="128" r="26" fill="url(#fensterGlow)"/><circle cx="985" cy="124" r="26" fill="url(#fensterGlow)"/>
+    <rect x="232" y="118" width="36" height="24" fill="#0f1d45"/><path d="M227 120 L250 101 L273 120Z" fill="#e6edf9"/>
+    <rect x="245" y="125" width="9" height="8" fill="#ffd27a"/>
+    <rect x="968" y="114" width="34" height="26" fill="#0f1d45"/><path d="M963 116 L985 97 L1007 116Z" fill="#e6edf9"/>
+    <rect x="975" y="122" width="7" height="8" fill="#ffd27a"/><rect x="989" y="122" width="7" height="8" fill="#ffd27a"/>
+    <path d="M0 168 C220 140 430 158 620 165 C820 172 990 145 1200 155 L1200 200 L0 200Z" fill="url(#schneeVorn)"/>
+    <use href="#baum" x="120" y="156"/><use href="#baum" x="440" y="162" transform="translate(440 162) scale(.9) translate(-440 -162)"/>
+    <use href="#baum" x="770" y="170"/><use href="#baum" x="806" y="171" transform="translate(806 171) scale(.7) translate(-806 -171)"/>
+    <use href="#baum" x="1080" y="153"/>
+  </svg>
+</div>
+<div id="schnee" aria-hidden="true"></div>
+<div class="lichterkette" id="lichterkette" aria-hidden="true"></div>
+
+<main>
+  <header>
+    <div class="klein">Advent 2026</div>
+    <h1>Adventskalender</h1>
+    <div id="hinweis">Zieh eine Kugel aus dem Automaten und scanne sie.</div>
+  </header>
+
+  <section class="tafel" aria-label="Adventskalender mit 24 Türchen">
+    <div class="schneekante" aria-hidden="true"></div>
+    <div class="schleife" aria-hidden="true"></div>
+    <div class="raster" id="raster"></div>
+  </section>
+
+  <section class="kranz" aria-labelledby="kranzText">
+    <div class="kranz-bild" aria-hidden="true">
+      <svg viewBox="0 0 270 64">
+        <ellipse cx="135" cy="34" rx="118" ry="20" fill="none" stroke="#174a31" stroke-width="22"/>
+        <ellipse cx="135" cy="34" rx="118" ry="20" fill="none" stroke="#2f7d52" stroke-width="26" stroke-dasharray="1.4 3"/>
+        <ellipse cx="135" cy="32" rx="118" ry="19" fill="none" stroke="#22643f" stroke-width="10" stroke-dasharray="2 4"/>
+      </svg>
+      <div class="kerze" style="left:52px; height:44px"><span class="flamme"></span></div>
+      <div class="kerze" style="left:108px; height:50px; bottom:40px"><span class="flamme" style="animation-delay:-.4s"></span></div>
+      <div class="kerze" style="left:164px; height:56px; bottom:40px"><span class="flamme" style="animation-delay:-.9s"></span></div>
+      <div class="kerze" style="left:220px; height:60px"><span class="flamme" style="animation-delay:-1.3s"></span></div>
+      <svg viewBox="0 0 270 64">
+        <path d="M17 34 A118 20 0 0 0 253 34" fill="none" stroke="#174a31" stroke-width="22"/>
+        <path d="M17 34 A118 20 0 0 0 253 34" fill="none" stroke="#2f7d52" stroke-width="26" stroke-dasharray="1.4 3"/>
+        <path d="M24 40 A112 16 0 0 0 246 40" fill="none" stroke="#3a9163" stroke-width="6" stroke-dasharray="1 5"/>
+        <g fill="#d4202a"><circle cx="40" cy="46" r="4"/><circle cx="46" cy="50" r="3.5"/><circle cx="134" cy="56" r="4"/><circle cx="141" cy="53" r="3.5"/><circle cx="228" cy="47" r="4"/><circle cx="222" cy="51" r="3.5"/></g>
+        <g fill="#e8c26a"><circle cx="86" cy="54" r="5.5"/><circle cx="186" cy="54" r="5.5"/></g>
+        <g fill="#fff" opacity=".55"><circle cx="84" cy="52" r="1.8"/><circle cx="184" cy="52" r="1.8"/></g>
+      </svg>
+    </div>
+    <div class="kranz-text" id="kranzText"></div>
+  </section>
+
+  <footer>
+    <div class="familie" id="familie" aria-label="Reihenfolge"></div>
+    <div class="fussnote">Frohe Adventszeit! 🎄</div>
+  </footer>
+</main>
+
+<div id="buehne" aria-hidden="true"></div>
+<div id="toast" role="status" aria-live="polite"></div>
+
+<script>
+// ── Familie: zieht in dieser Reihenfolge, jeden Tag die/der Nächste ──
+const FAMILIE = ["Ben", "Emmi", "Silvi", "Jan"];
+
+// ── Testmodus ───────────────────────────────────────────────
+// true: jedes Türchen lässt sich antippen und öffnen (zum Ausprobieren).
+// Für den echten Dezember auf false stellen.
+// Aeltere Safari (unter 13.4 bzw. 14): ohne animate/replaceChildren laeuft der Rest weiter (Gesamtpruefung 01.11. H4-2)
+if (!Element.prototype.animate) Element.prototype.animate = function () {
+  const a = { onfinish: null, cancel() {}, finished: Promise.resolve() };
+  setTimeout(() => { if (a.onfinish) a.onfinish(); }, 0);
+  return a;
+};
+if (!Element.prototype.replaceChildren) Element.prototype.replaceChildren = function () {
+  this.textContent = "";
+  for (let i = 0; i < arguments.length; i++) this.append(arguments[i]);
+};
+const TESTMODUS = true;
+
+// ── Gewinne ─────────────────────────────────────────────────
+// An Gutschein-Tagen (EVENTS unten) ist der Gutschein der Gewinn, am 24. das Finale.
+// An allen anderen Tagen gibt es ein echtes Päckchen, der Reihe nach nummeriert
+// (PAECKCHEN unten): 1.12. = 1, 2.12. = 2, 3.12. = 3, 5.12. = 4 …
+// Die Kugel-Nummer zählt nur noch fürs Merken, welche Kugel welches Türchen war.
+const GEWINNE = {};
+for (let n = 1; n <= 24; n++) GEWINNE[n] = { bild: "🎁" };
+
+// ── Familien-Events: fest an einem Türchen (Datum) ──────────
+// An diesen Tagen IST der Gutschein der Gewinn: nach Bild/Video kommt direkt das Ticket
+// (die Kugel-Gewinn-Karte fällt weg).
+// "Einlösen" stempelt das Ticket und öffnet WhatsApp mit fertiger Nachricht.
+// bild = großes Emoji, regen = was vom Himmel fällt (Liste, regnet bis das Ticket zu ist),
+// nachricht = WhatsApp-Text.
+const EVENTS = {
+  // Gutscheine gelten nicht nur an dem Tag – einlösen, wann es passt.
+  // mitBabsi: true → "zusammen mit Babsi" auf dem Ticket
+  4: {
+    bild: "🏊", regen: ["🩲", "👙", "🩱", "🩳"],
+    titel: "Schwimmbad-Gutschein!",
+    text: "Ab in den Vitalpark – sucht euch einen Tag aus, den Eintritt übernehmen wir.",
+    nachricht: "Wir lösen den Schwimmbad-Gutschein ein! 🏊 Ab in den Vitalpark."
+  },
+  7: {
+    bild: "💅", regen: ["💅", "💄", "👛", "👠", "🎀", "💍", "👗", "💖"], mitBabsi: true,
+    titel: "Mädelstag, Silvi!",
+    text: "Shoppen, Nägel, Kaffee und Kuchen – du entscheidest, wir übernehmen die Rechnung.",
+    nachricht: "Silvi möchte den Mädelstag-Gutschein einlösen! 💅 Wann hast du Zeit?"
+  },
+  9: {
+    bild: "🖨️", regen: ["🧩", "⚙️", "🎲", "🔩"],
+    titel: "3D-Druck-Gutschein, Ben!",
+    text: "Such dir etwas aus, das wir für dich in 3D drucken – du entscheidest, was es wird.",
+    nachricht: "Ben löst den 3D-Druck-Gutschein ein! 🖨️ Das hier soll gedruckt werden:"
+  },
+  12: {
+    bild: "🍕", regen: "🍕",
+    titel: "Pizza-Gutschein!",
+    text: "Sucht euch einen Abend aus und bestellt Pizza, so viel ihr wollt – die Rechnung übernehmen wir.",
+    nachricht: "Wir lösen den Pizza-Gutschein ein! 🍕"
+  },
+  14: {
+    bild: "🛍️", regen: ["🧴", "🧼", "🪥", "🧽", "💄", "🧻", "🪮"], mitBabsi: true,
+    titel: "Drogerie-Gutschein, Emmi!",
+    text: "Ab in den Drogeriemarkt – such dir was Schönes aus, wir übernehmen die Rechnung.",
+    nachricht: "Emmi möchte den Drogerie-Gutschein einlösen! 🛍️ Wann hast du Zeit?"
+  },
+  19: {
+    bild: "🍷", regen: ["🍷", "☕", "🍵", "🥂"], mitBabsi: true,
+    titel: "Glühwein-Gutschein!",
+    text: "Glühwein und Kinderpunsch für die Kleinen – die Runde geht auf uns.",
+    nachricht: "Wir möchten den Glühwein-Gutschein einlösen! 🍷 Wann hast du Zeit?"
+  },
+  // finale: kein Gutschein, sondern ein großes Geschenk zum Antippen
+  24: {
+    finale: true,
+    titel: "Frohe Weihnachten!",
+    text: "Packt eure Geschenke aus! 🎁"
+  }
+};
+
+// Päckchen-Nummer je Türchen: alle Tage ohne Gutschein, der Reihe nach.
+const PAECKCHEN = {};
+for (let t = 1, n = 0; t <= 24; t++) if (!EVENTS[t]) PAECKCHEN[t] = ++n;
+// WhatsApp-Nummer für "Einlösen" (Babsi) steht NICHT hier, sondern verschlüsselt in
+// kontakt.bin (aus geheim.json → "whatsapp", über bauen.py). Ohne Kugel oder ohne
+// Nummer fragt WhatsApp beim Senden, an wen.
+let WHATSAPP = "";
+
+// ── Kugeln und Fotos ────────────────────────────────────────
+// Die Seite kennt die Kugel-Codes nicht, nur eine abgeleitete Kennung. Aus dem
+// gescannten Code wird ein Schlüssel abgeleitet, der den Foto-Schlüssel auspackt.
+// Ohne Kugel bleiben die Fotos (familie.bin, tuerchen-NN.bin) Zeichensalat.
+// Neue Fotos/Codes: E:\_Dateien\2026-10-31_Adventskalender\bauen.py
+// <<DATEN>> — erzeugt von bauen.py, nicht von Hand ändern
+const SALZ = "QY2pUN6eeECN4TSf5rnL4g==", ITER = 600000;
+const KUGELN = {
+  "8216df805da9304a": {"nr": 1, "w": "oqn2hFfcPYHje0XRSd98UelCwIh6OdOiS/6jLOlNXMPb3vKURwnd8lFk+gmF2uvsR07+MlcYKPCCMku2"},
+  "79ab139104e1b39c": {"nr": 2, "w": "OEgBrIzGGolNFcxxCgoKqly2awZLuV5FQT6oen//gU2i6KjCK/Ei3Tz8xvbQZoyxl+9efeaXjD3PQeAh"},
+  "959f10c23ea9bfef": {"nr": 3, "w": "ZwNIowL+HP+X5xYGEcEJYgpIH6Pdtj563LXUF/gflmTWxZfPTtxpws2uW41/kaJDR750qTfdNb5PB1dm"},
+  "39eaf796641e7967": {"nr": 4, "w": "bUazBcuQlDyT0pXenspjTSmerSu+708Bbgw6cCUF9uXZbcVq33cdTkelqwGUbMp7IelVDj3Iz1InXYHp"},
+  "9e05b721909d6450": {"nr": 5, "w": "E6e2w4XbzHn0vm+VetJglRN9ezD77U/wu7ZDNIoz3QR0Rp7FOaPvbep4nB162BpwaR3XAk0Vw7x2hcaj"},
+  "504035b16177e9ab": {"nr": 6, "w": "MK320Y5OK4uVxkXKRgMT1JkAgb8EqSb5gsp36lA65f36avByzensmZTV0zLj1lu/pflZlbGDr0BeA0JL"},
+  "3e9067894a2f3531": {"nr": 7, "w": "IMVdZuyMJpHP3zt9BPa/yqkTaGBaqzB7Tu0kFvTWzEovn34PZKc6uN43hHLGKs9zPdgv5CQ+cG7xr/nP"},
+  "973f20c3ae81e5e1": {"nr": 8, "w": "6WrTdUzGNxN+EZ1LyGczknWTYsoEZLzOzOnPbkPYcbaR+uuu3B3kMgBMiAnfSmO919Wt8pcmQN+b4tU1"},
+  "452c9326d7f23ad7": {"nr": 9, "w": "jNpsqaa0usee/HgL8dXJa2FqXxzKVPanZ2zFdbY35o3a7qlRslxwOQOhBntimxM6COuVgTtM876hQ2Qs"},
+  "e2604d575b04aa37": {"nr": 10, "w": "ZsaurHMtBBp0iCw7aWNrJBGqZrd1mRvbu5a8IPTkLDiKPIcn5PxvgmRFvLvc67n4tmZSBeSVHnC2vtlm"},
+  "06dbabd03a4c92b0": {"nr": 11, "w": "xMj81yIbwY0bslnigVR1VqWtkB8EhfUs1inrxVWNSqL/kaCnnn/3qseyK1PP0n+KCkXlN3Syefrm/YlP"},
+  "e05642709105c7bd": {"nr": 12, "w": "pT1KnhXDdkof1yUIKjyAlzacJIoNZbxY3OfOd2gfO+5xTJmwxXa09Rfc6CXUEGIlkB5l9KKjqD1qxbpE"},
+  "e941ebd00c01fbb1": {"nr": 13, "w": "N0QlZGhQhU1tettaiSW1P1cmmOS1oywJM+ZgHRyHxrvKbND3AWKPILMFzTxwxuzxgNUrSvJ/2pQBXAgT"},
+  "4ede52207da99f8a": {"nr": 14, "w": "7HmpTogEUmrLu+ZA4/wbJGa/sf127AIwVQUwTQ1MVsAleS/7SLgplY4pyrNXZ+IdXFzbhPujoiohfUEv"},
+  "a0606572230f9a2f": {"nr": 15, "w": "4ADke0qMtJ+39lcePSMHKky3YIdfkgHM7vZeMrA3rqO65vPaee2F2IHH1FwuLBVes4IZ8nTv5IhvIKYD"},
+  "75e9856395e93d5a": {"nr": 16, "w": "+lfm19lQ9e+UmepNXELZWbhGsCxHyFTFrNHwLP+1WCZJEDbLI6R2IZONtjhOyRKxXfQaodbE90Tkl5rt"},
+  "6912aee0ca774d09": {"nr": 17, "w": "GU/TR8PBHuVsEfcrQeuoxtUj6JsL4y3KBL7YbzqbB1ennToMaCJGBAhYHcnz4ApJfdFHivypLc3NLhh9"},
+  "e45a9177c66ef4bd": {"nr": 18, "w": "uuW3ucI+xNU7XSD6iORw1zSoopZOkWBZAt1rxFa4oKFkQXMvQXtPxYBoUQaC9EOec4gPwXRBZ6fopuop"},
+  "a1c9924eeb231cab": {"nr": 19, "w": "dEUtMoNAbbIzBLOWP0GSb1266QPF/xVPOUbsJDew5o5bWCznGZjt/uVmRq+ipLiaMzJ8SfCXsnwk/otL"},
+  "657eeab238b5a24c": {"nr": 20, "w": "heMhZOiuRPs4jMNN+5NZFz/Adv/514fbWcqoytAk0/68+YsJ7X3zzPpKAcejW0Vcm16PmEiSBYj1vUpG"},
+  "66195197c9584249": {"nr": 21, "w": "2FUZXub9yp5RBziBs3aNkDFT8qcR4O/Gca42+vTKAx/wJnYJFBpxBfnpyy3oArI233XeTLeielHUXeCW"},
+  "a69997ff216eb124": {"nr": 22, "w": "t7ZT8AmeQcvWoz2LTofoHg9CfY/JFSyZdlRJq2knKrzI5bWbIT4hkjsgucGQyztiox1Vn4JvzMMgPRbr"},
+  "1f1b817c21964048": {"nr": 23, "w": "MnIxDd6Axr/UAxuHBgc6AGcsYarFSRw8EMMV8p3exULXnqdUFuJSKo2UJVvQHhDkPYeo5WuZjH0bYgYc"},
+  "f9d27cd56af39c12": {"nr": 24, "w": "+nBXQRYb5laDL5oTs2MVwr+21eYUKoUAVstNXb6DxvbDfoBFJuukw08Lnip2a0J6I3BWX/SmSMU5VmsN"}
+};
+const FOTOS = {
+  1: [{"d": "tuerchen-01.bin", "t": "image/jpeg"}],
+  2: [{"d": "tuerchen-02.bin", "t": "image/jpeg"}],
+  3: [{"d": "tuerchen-03.bin", "t": "image/jpeg"}],
+  4: [{"d": "tuerchen-04.bin", "t": "video/mp4"}],
+  5: [{"d": "tuerchen-05.bin", "t": "image/jpeg"}],
+  6: [{"d": "tuerchen-06.bin", "t": "image/jpeg"}],
+  7: [{"d": "tuerchen-07.bin", "t": "video/mp4"}],
+  8: [{"d": "tuerchen-08.bin", "t": "image/jpeg"}],
+  9: [{"d": "tuerchen-09.bin", "t": "image/jpeg"}],
+  10: [{"d": "tuerchen-10.bin", "t": "image/jpeg"}],
+  11: [{"d": "tuerchen-11.bin", "t": "video/mp4"}],
+  12: [{"d": "tuerchen-12.bin", "t": "image/jpeg"}],
+  13: [{"d": "tuerchen-13.bin", "t": "image/jpeg"}],
+  14: [{"d": "tuerchen-14.bin", "t": "video/mp4"}],
+  15: [{"d": "tuerchen-15.bin", "t": "image/jpeg"}],
+  16: [{"d": "tuerchen-16.bin", "t": "image/jpeg"}],
+  17: [{"d": "tuerchen-17.bin", "t": "image/jpeg"}],
+  18: [{"d": "tuerchen-18.bin", "t": "video/mp4"}],
+  19: [{"d": "tuerchen-19.bin", "t": "image/jpeg"}],
+  20: [{"d": "tuerchen-20.bin", "t": "image/jpeg"}],
+  21: [{"d": "tuerchen-21.bin", "t": "video/mp4"}],
+  22: [{"d": "tuerchen-22.bin", "t": "image/jpeg"}],
+  23: [{"d": "tuerchen-23.bin", "t": "image/jpeg"}],
+  24: [{"d": "tuerchen-24.bin", "t": "video/mp4"}, {"d": "tuerchen-24-2.bin", "t": "image/jpeg"}]
+};
+// <</DATEN>>
+
+// Feste, gemischte Reihenfolge auf der Tafel (wie bei einem echten Kalender).
+const REIHENFOLGE = [13, 5, 21, 9, 2, 17, 7, 24, 11, 19, 4, 15, 22, 1, 8, 14, 20, 6, 10, 3, 18, 12, 23, 16];
+
+const wer = tag => FAMILIE[(tag - 1) % FAMILIE.length];
+
+// Gescannte Kugel: ?k=abc123 — wird erst in start() geprüft.
+const params = new URLSearchParams(location.search);
+const kCode = (params.get("k") || "").toLowerCase().trim();
+let kugel = null;          // { nr, bild, titel, text } nach erfolgreicher Prüfung
+let schluessel = null;     // Foto-Schlüssel (CryptoKey)
+
+// Welches Türchen ist heute dran? Am 1.–24. Dezember das Datum.
+// Zum Ausprobieren vorher: ?k=…&tag=5 tut so, als wäre der 5. Dezember.
+const jetzt = new Date();
+const testTag = /^\d{1,2}$/.test(params.get("tag") || "") ? +params.get("tag") : null;
+const echterTag = jetzt.getMonth() === 11 && jetzt.getDate() <= 24 ? jetzt.getDate() : null;
+const heute = testTag >= 1 && testTag <= 24 ? testTag : echterTag;
+// Der Kalender gilt fuer Dezember 2026; ab dem 25.12.2026 bleibt alles offen – auch im neuen Jahr (Gutscheine gelten jederzeit)
+const vorbei = jetzt >= new Date(2026, 11, 25);
+const vorDezember = !heute && !vorbei && jetzt.getMonth() < 11;
+const nachHeiligabend = !heute && (vorbei || jetzt.getMonth() === 11);   // ab 25.12.: alles offen
+
+// Auf diesem Gerät gemerkt: welches Türchen mit welcher Kugel-Nummer geöffnet
+// wurde, und der Foto-Schlüssel (damit die Fotos auch ohne neuen Scan kommen).
+// Im Testmodus unter eigenem Namen, damit Test-Öffnungen im Dezember nicht mitzählen.
+const SPEICHER = "adventskalender-2026";
+const OFFEN = SPEICHER + (TESTMODUS ? "-test" : "");
+let geoeffnet = {};
+try { geoeffnet = JSON.parse(localStorage.getItem(OFFEN) || "{}") || {}; } catch (e) {}
+function merken() { try { localStorage.setItem(OFFEN, JSON.stringify(geoeffnet)); } catch (e) {} }
+
+const raster = document.getElementById("raster");
+const hinweis = document.getElementById("hinweis");
+const toast = document.getElementById("toast");
+const buehne = document.getElementById("buehne");
+const ruhig = matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+REIHENFOLGE.forEach((tag, i) => {
+  const fach = document.createElement("div");
+  fach.className = "fach" + (tag === 24 ? " gross" : [6, 12, 18].includes(tag) ? " breit" : "");
+  fach.dataset.tag = tag;
+  fach.innerHTML =
+    '<div class="innen" aria-hidden="true"><span class="tag-nr">' + tag + '</span><span class="bild">' + (EVENTS[tag] ? EVENTS[tag].bild || "🎁" : "🎁") + '</span></div>' +
+    '<button class="tuer" type="button" aria-label="Türchen ' + tag + ', ' + wer(tag) + '">' +
+      '<span class="vorne"><span class="zahl">' + tag + '</span></span>' +
+      '<span class="hinten"></span>' +
+    '</button>';
+  // Schon geöffnete Türchen bleiben offen (auch nach Neuladen), im Dezember dazu alle vergangenen Tage.
+  if (geoeffnet[tag] || (!TESTMODUS && ((heute && tag < heute) || nachHeiligabend))) fach.classList.add("offen");
+  // Klick aufs ganze Fach: geschlossen über die Tür, offen auf das Innere.
+  fach.addEventListener("click", () => tippen(fach, tag));
+  raster.appendChild(fach);
+});
+
+// Das Foto liegt über der ganzen Tafel; jedes Türchen bekommt den Ausschnitt,
+// der an seiner Stelle liegt (wie "cover", mittig).
+const foto = new Image();
+function fotoAuslegen() {
+  if (!foto.naturalWidth) return;
+  const W = raster.clientWidth, H = raster.clientHeight;
+  const s = Math.max(W / foto.naturalWidth, H / foto.naturalHeight);
+  const bw = foto.naturalWidth * s, bh = foto.naturalHeight * s;
+  const ox = (W - bw) / 2, oy = (H - bh) / 2;
+  raster.querySelectorAll(".fach").forEach(f => {
+    const v = f.querySelector(".vorne").style;
+    v.setProperty("--foto", 'url("' + foto.src + '")');
+    v.setProperty("--bw", bw + "px"); v.setProperty("--bh", bh + "px");
+    v.setProperty("--bx", (ox - f.offsetLeft) + "px"); v.setProperty("--by", (oy - f.offsetTop) + "px");
+  });
+}
+foto.onload = fotoAuslegen;
+addEventListener("resize", fotoAuslegen);
+
+// ── Entschlüsseln ───────────────────────────────────────────
+const vonB64 = t => Uint8Array.from(atob(t), c => c.charCodeAt(0));
+const zuB64 = b => btoa(String.fromCharCode(...new Uint8Array(b)));
+
+async function kugelPruefen(code) {
+  const basis = await crypto.subtle.importKey("raw", new TextEncoder().encode(code), "PBKDF2", false, ["deriveBits"]);
+  const bits = new Uint8Array(await crypto.subtle.deriveBits(
+    { name: "PBKDF2", hash: "SHA-256", salt: vonB64(SALZ), iterations: ITER }, basis, 320));
+  const kennung = Array.from(bits.slice(32, 40), x => x.toString(16).padStart(2, "0")).join("");
+  const e = KUGELN[kennung];
+  if (!e) return null;
+  const huelle = await crypto.subtle.importKey("raw", bits.slice(0, 32), "AES-GCM", false, ["decrypt"]);
+  const w = vonB64(e.w);
+  const roh = await crypto.subtle.decrypt({ name: "AES-GCM", iv: w.slice(0, 12) }, huelle, w.slice(12));
+  return { nr: e.nr, roh };
+}
+
+const fotoCache = {};
+function fotoUrl(datei, typ = "image/jpeg") {
+  if (!schluessel) return Promise.resolve(null);
+  if (!fotoCache[datei]) fotoCache[datei] = (async () => {
+    const d = new Uint8Array(await (await fetch(datei)).arrayBuffer());
+    const klar = await crypto.subtle.decrypt({ name: "AES-GCM", iv: d.slice(0, 12) }, schluessel, d.slice(12));
+    return URL.createObjectURL(new Blob([klar], { type: typ }));
+  })().catch(() => { delete fotoCache[datei]; return null; });   // beim nächsten Mal neu versuchen
+  return fotoCache[datei];
+}
+
+async function start() {
+  if (kCode) {
+    hinweis.textContent = "Kugel wird geprüft …";
+    try {
+      const r = await kugelPruefen(kCode);
+      if (r) {
+        kugel = Object.assign({ nr: r.nr }, GEWINNE[r.nr]);
+        try { localStorage.setItem(SPEICHER + "-s", zuB64(r.roh)); } catch (e) {}
+        schluessel = await crypto.subtle.importKey("raw", r.roh, "AES-GCM", false, ["decrypt"]);
+      }
+    } catch (e) {}
+  }
+  if (!schluessel) {
+    try {
+      const s = localStorage.getItem(SPEICHER + "-s");
+      if (s) schluessel = await crypto.subtle.importKey("raw", vonB64(s), "AES-GCM", false, ["decrypt"]);
+    } catch (e) {}
+  }
+  hinweisSetzen();
+  try {
+    const k = await fotoUrl("kontakt.bin", "application/json");
+    if (k) WHATSAPP = String((await (await fetch(k)).json()).whatsapp || "").replace(/\D/g, "");
+  } catch (e) {}
+  const url = await fotoUrl("familie.bin");
+  if (url) foto.src = url;
+}
+
+function hinweisSetzen() {
+const heuteFach = heute && raster.querySelector('[data-tag="' + heute + '"]');
+const tagDerKugel = kugel && Object.keys(geoeffnet).map(Number).find(t => geoeffnet[t] === kugel.nr);
+if (TESTMODUS) {
+  hinweis.innerHTML = "<b>Testmodus:</b> Jedes Türchen lässt sich öffnen." + (kCode && !kugel ? " (Kugel unbekannt)" : "") +
+    ' <button type="button" class="zuruecksetzen">alle schließen</button>';
+  hinweis.querySelector(".zuruecksetzen").onclick = () => {
+    geoeffnet = {}; merken();
+    try { localStorage.removeItem(EINGELOEST); } catch (e) {}
+    location.reload();
+  };
+} else if (!kCode && heute && !geoeffnet[heute]) {
+  hinweis.innerHTML = "Heute ist <b>" + wer(heute) + "</b> dran – zieh eine Kugel und scanne sie!";
+} else if (kCode && !kugel) {
+  hinweis.textContent = "Diese Kugel kenne ich nicht. Bitte nochmal scannen.";
+} else if (tagDerKugel) {
+  hinweis.innerHTML = "Diese Kugel gehört zu Türchen <b>" + tagDerKugel + "</b> – tipp es an!";
+  raster.querySelector('[data-tag="' + tagDerKugel + '"]').classList.add("dran");
+} else if (vorDezember) {
+  const bis = Math.ceil((new Date(jetzt.getFullYear(), 11, 1) - jetzt) / 864e5);
+  hinweis.innerHTML = "Noch <b>" + bis + " Tage</b> bis zum 1. Dezember. Dann darf <b>Ben</b> anfangen!";
+} else if (!heute) {
+  hinweis.textContent = "Frohe Weihnachten! Der Kalender ist vorbei.";
+} else if (geoeffnet[heute]) {
+  hinweis.innerHTML = "Türchen <b>" + heute + "</b> ist heute schon offen. " +
+    (heute < 24 ? "Morgen ist <b>" + wer(heute + 1) + "</b> dran." : "Frohe Weihnachten!");
+} else {
+  hinweis.innerHTML = "<b>" + wer(heute) + "</b>, dein Türchen ist die <b>" + heute + "</b> – tipp es an!";
+  heuteFach.classList.add("dran");
+}
+const blinkt = raster.querySelector(".dran");
+if (blinkt) setTimeout(() => blinkt.scrollIntoView({ behavior: ruhig ? "auto" : "smooth", block: "center" }), 400);
+}
+// Türchen warten auf die Kugel-Prüfung, bevor sie Bilder zeigen.
+const bereit = start();
+
+function tippen(fach, tag) {
+  if (fach.classList.contains("aufgehend")) return;   // Doppel-Tipp beim Aufgehen
+  if (fach.classList.contains("offen")) {
+    // Nochmal ansehen. Päckchen und Gutschein hängen am Türchen, nicht an der Kugel –
+    // also auch auf Geräten, die das Türchen nicht selbst geöffnet haben.
+    oeffnen(fach, tag, GEWINNE[geoeffnet[tag]] || { bild: "🎁" });
+    return;
+  }
+  if (!TESTMODUS && !fach.classList.contains("dran")) {
+    fach.classList.remove("wackeln"); void fach.offsetWidth; fach.classList.add("wackeln");
+    melde(heute && tag > heute ? "Erst am " + tag + ". Dezember – dann ist " + wer(tag) + " dran."
+          : kugel ? "Das ist heute nicht dran." : "Erst eine Kugel ziehen und scannen.");
+    return;
+  }
+  fach.classList.remove("dran");
+  fach.classList.add("offen", "aufgehend");
+  setTimeout(() => fach.classList.remove("aufgehend"), 1300);
+  // Im Testmodus: der Gewinn mit der Nummer des Türchens, sonst der der Kugel
+  const g = (!TESTMODUS && kugel) || Object.assign({ nr: tag }, GEWINNE[tag]);
+  geoeffnet[tag] = g.nr;
+  merken();
+  fach.querySelector(".innen .bild").textContent = EVENTS[tag] ? EVENTS[tag].bild || "🎁" : g.bild;
+  hinweis.innerHTML = "Türchen <b>" + tag + "</b> ist offen!";
+  setTimeout(() => oeffnen(fach, tag, g), ruhig ? 0 : 650);
+}
+
+// Erst Bilder/Videos (falls es welche gibt), danach der Gewinn.
+// An Event-Tagen kommt statt der Gewinn-Karte das Gutschein-Ticket.
+async function oeffnen(fach, tag, g) {
+  await bereit;
+  const danach = EVENTS[tag] ? () => zeigeEvent(fach, tag) : g ? () => zeigeGewinn(fach, tag, g, true) : null;
+  if (FOTOS[tag] && schluessel) zeigeMedien(fach, tag, FOTOS[tag], danach);
+  else if (danach) danach();
+  else melde("Türchen " + tag + " hatte " + wer(tag) + ".");
+}
+
+const ENDUNG = { "image/jpeg": "jpg", "image/png": "png", "image/webp": "webp", "video/mp4": "mp4", "video/webm": "webm" };
+
+// Bilder und Videos hinter einem Türchen: blättern (Pfeile, Wischen, Tasten),
+// jedes einzeln herunterladen, dann weiter zum Gewinn.
+function zeigeMedien(fach, tag, liste, weiter) {
+  const mehrere = liste.length > 1;
+  buehne.innerHTML =
+    '<div class="karte foto" role="dialog" aria-modal="true" aria-label="Bilder hinter Türchen ' + tag + '">' +
+      '<div class="band">Türchen ' + tag + ' · ' + wer(tag) + '</div>' +
+      '<div class="medium"><span class="lade">Wird geladen …</span></div>' +
+      (mehrere ? '<div class="blaettern">' +
+        '<button type="button" class="pfeil" data-r="-1" aria-label="Vorheriges">‹</button>' +
+        '<span class="zaehler"></span>' +
+        '<button type="button" class="pfeil" data-r="1" aria-label="Nächstes">›</button></div>' : '') +
+      '<div class="knoepfe">' +
+        '<a class="knopf hell">⬇ Herunterladen</a>' +
+        '<button type="button" class="knopf weiter">' + (!weiter ? "Schließen" : !EVENTS[tag] ? "Weiter zum Päckchen 🎁" : EVENTS[tag].finale ? "Weiter … 🎄" : "Weiter zum Gutschein 🎟️") + '</button>' +
+      '</div>' +
+    '</div>';
+  const karte = buehne.querySelector(".karte");
+  const medium = karte.querySelector(".medium");
+  medium.dataset.unterschrift = tag + ". Dezember · " + wer(tag);
+  const laden = karte.querySelector("a");
+  let jetzt = 0;
+
+  async function zeige(i) {
+    jetzt = (i + liste.length) % liste.length;
+    const e = liste[jetzt], nr = jetzt;
+    if (mehrere) karte.querySelector(".zaehler").textContent = (jetzt + 1) + " / " + liste.length;
+    medium.querySelectorAll("video").forEach(v => v.pause());
+    medium.innerHTML = '<span class="lade">Wird geladen …</span>';
+    laden.removeAttribute("href");
+    const url = await fotoUrl(e.d, e.t);
+    if (nr !== jetzt) return;                      // inzwischen weitergeblättert
+    if (!url) { medium.innerHTML = '<span class="lade">Konnte nicht geladen werden.</span>'; return; }
+    const el = document.createElement(e.t.startsWith("video") ? "video" : "img");
+    if (el.tagName === "VIDEO") { el.controls = true; el.playsInline = true; el.preload = "metadata"; }
+    else el.alt = "Bild " + (jetzt + 1) + " hinter Türchen " + tag;
+    el.src = url;
+    medium.replaceChildren(el);
+    laden.href = url;
+    laden.download = "Adventskalender-Tuerchen-" + tag + (mehrere ? "-" + (jetzt + 1) : "") + "." + (ENDUNG[e.t] || "bin");
+  }
+
+  karte.querySelectorAll(".pfeil").forEach(b => b.addEventListener("click", () => zeige(jetzt + +b.dataset.r)));
+  let startX = null;
+  medium.addEventListener("touchstart", ev => { startX = ev.touches[0].clientX; }, { passive: true });
+  medium.addEventListener("touchend", ev => {
+    const dx = ev.changedTouches[0].clientX - startX;
+    if (mehrere && Math.abs(dx) > 45) zeige(jetzt + (dx < 0 ? 1 : -1));
+  });
+  aufBuehne(fach, karte, false);
+  document.onkeydown = ev => {
+    if (ev.key === "Escape") schliessen();
+    else if (mehrere && ev.key === "ArrowRight") zeige(jetzt + 1);
+    else if (mehrere && ev.key === "ArrowLeft") zeige(jetzt - 1);
+  };
+  karte.querySelector(".weiter").addEventListener("click", () => {
+    medium.querySelectorAll("video").forEach(v => v.pause());
+    weiter ? weiter() : schliessen();
+  });
+  zeige(0);
+}
+
+function zeigeGewinn(fach, tag, g, nachFoto) {
+  const n = PAECKCHEN[tag];
+  g = { bild: "🎁", titel: "Päckchen " + n, text: "Such das Päckchen mit der Nummer " + n + " – viel Spaß beim Auspacken!" };
+  buehne.innerHTML =
+    '<div class="karte" role="dialog" aria-modal="true" aria-labelledby="gewTitel">' +
+      '<div class="band">Türchen ' + tag + ' · ' + wer(tag) + '</div>' +
+      '<div class="bild" aria-hidden="true">' + g.bild + '</div>' +
+      '<h2 id="gewTitel"></h2><p></p>' +
+      '<button type="button">Juhu, danke!</button>' +
+    '</div>';
+  const karte = buehne.querySelector(".karte");
+  karte.querySelector("h2").textContent = g.titel;
+  karte.querySelector("p").textContent = g.text;
+  aufBuehne(fach, karte, true, nachFoto);
+  karte.querySelector("button").addEventListener("click", schliessen);
+}
+
+// ── Event-Ticket ────────────────────────────────────────────
+const EINGELOEST = SPEICHER + "-events" + (TESTMODUS ? "-test" : "");
+let eingeloest = {};
+try { eingeloest = JSON.parse(localStorage.getItem(EINGELOEST) || "{}") || {}; } catch (e) {}
+
+// Heiligabend: großes Geschenk, antippen → Deckel fliegt, Geschenke explodieren.
+function zeigeFinale(fach, tag) {
+  const ev = EVENTS[tag];
+  buehne.innerHTML =
+    '<div class="karte finale" role="dialog" aria-modal="true" aria-labelledby="finTitel">' +
+      '<div class="band">Heiligabend · Türchen ' + tag + '</div>' +
+      '<p class="fin-tipp">Tipp aufs Geschenk!</p>' +
+      '<button type="button" class="geschenk" aria-label="Geschenk auspacken">' +
+        '<span class="strahlen"></span><span class="kiste"></span><span class="deckel"><span class="schleife"></span></span>' +
+      '</button>' +
+      '<div class="fin-text"><h2 id="finTitel"></h2><p></p><p class="fin-namen">' + FAMILIE.join(" · ") + '</p>' +
+        '<button type="button" class="knopf">Frohe Weihnachten! ❤️</button></div>' +
+    '</div>';
+  const karte = buehne.querySelector(".karte");
+  karte.querySelector("h2").textContent = ev.titel;
+  karte.querySelector(".fin-text p").textContent = ev.text;
+  const geschenk = karte.querySelector(".geschenk");
+  geschenk.addEventListener("click", () => {
+    if (karte.classList.contains("auf")) return;
+    karte.classList.add("auf");
+    setTimeout(() => {
+      geschenkRegen();
+      karte.querySelector(".fin-text .knopf").focus({ preventScroll: true });
+    }, ruhig ? 0 : 650);
+  }, { once: true });
+  karte.querySelector(".fin-text .knopf").addEventListener("click", schliessen);
+  aufBuehne(fach, karte, false, true);
+  geschenk.focus({ preventScroll: true });
+}
+
+// Geschenke und Sterne fliegen aus der Mitte nach allen Seiten.
+function geschenkRegen() {
+  if (ruhig) return;
+  const zeichen = ["🎁", "🎄", "⭐", "✨", "🎅", "❤️", "🎀", "🦌"];
+  const mx = innerWidth / 2, my = innerHeight / 2 - 40;
+  for (let i = 0; i < 44; i++) {
+    const f = document.createElement("div");
+    f.className = "regen";
+    f.textContent = zeichen[i % zeichen.length];
+    f.style.left = mx + "px"; f.style.top = my + "px";
+    f.style.fontSize = 18 + Math.random() * 24 + "px";
+    buehne.prepend(f);
+    const w = Math.random() * Math.PI * 2, r = 120 + Math.random() * 260;
+    f.animate([
+      { transform: "translate(-50%,-50%) scale(.3) rotate(0)", opacity: 1 },
+      { transform: "translate(" + Math.cos(w) * r + "px," + (Math.sin(w) * r - 80) + "px) scale(1) rotate(" + (Math.random() * 360 - 180) + "deg)", opacity: 1, offset: .55 },
+      { transform: "translate(" + Math.cos(w) * r * 1.1 + "px," + (Math.sin(w) * r + 420) + "px) scale(1) rotate(" + (Math.random() * 720 - 360) + "deg)", opacity: 0 }
+    ], { duration: 2200 + Math.random() * 900, easing: "cubic-bezier(.2,.7,.5,1)" }).onfinish = () => f.remove();
+  }
+  funken();
+}
+
+function zeigeEvent(fach, tag) {
+  const ev = EVENTS[tag];
+  if (ev.finale) return zeigeFinale(fach, tag);
+  const text = ev.nachricht + "\n(Adventskalender, Türchen " + tag + ", " + wer(tag) + ")";
+  buehne.innerHTML =
+    '<div class="karte ticket" role="dialog" aria-modal="true" aria-labelledby="evTitel">' +
+      '<div class="band">Familien-Event · Türchen ' + tag + '</div>' +
+      '<div class="ticket-kopf">Gutschein</div>' +
+      '<div class="bild" aria-hidden="true"></div>' +
+      '<h2 id="evTitel"></h2><p></p>' +
+      (ev.mitBabsi ? '<p class="mit">👭 zusammen mit Babsi</p>' : '') +
+      '<div class="abriss" aria-hidden="true"></div>' +
+      '<div class="stempel" aria-hidden="true"></div>' +
+      '<div class="knoepfe">' +
+        '<a class="knopf einloesen" target="_blank" rel="noopener">✔ Einlösen</a>' +
+        '<button type="button" class="knopf hell">Später</button>' +
+      '</div>' +
+    '</div>';
+  const karte = buehne.querySelector(".karte");
+  karte.querySelector(".bild").textContent = ev.bild;
+  karte.querySelector("h2").textContent = ev.titel;
+  karte.querySelector("h2 + p").textContent = ev.text;
+  const knopf = karte.querySelector(".einloesen");
+  knopf.href = "https://wa.me/" + WHATSAPP + "?text=" + encodeURIComponent(text);
+
+  function stempeln(datum, neu) {
+    const st = karte.querySelector(".stempel");
+    st.innerHTML = "Eingelöst<small>" + datum + "</small>";
+    st.classList.add("da");
+    if (neu && !ruhig) st.animate([
+      { transform: "rotate(-14deg) scale(2.4)", opacity: 0 },
+      { transform: "rotate(-14deg) scale(.92)", opacity: 1, offset: .7 },
+      { transform: "rotate(-14deg) scale(1)" }
+    ], { duration: 420, easing: "cubic-bezier(.3,1.4,.5,1)" });
+    knopf.textContent = "💬 Nochmal Bescheid geben";
+    karte.querySelector(".hell").textContent = "Schließen";
+  }
+  if (eingeloest[tag]) stempeln(eingeloest[tag], false);
+  knopf.addEventListener("click", () => {
+    if (eingeloest[tag]) return;              // WhatsApp geht trotzdem auf (Link)
+    eingeloest[tag] = new Date().toLocaleDateString("de-DE", { day: "2-digit", month: "2-digit" });
+    try { localStorage.setItem(EINGELOEST, JSON.stringify(eingeloest)); } catch (e) {}
+    stempeln(eingeloest[tag], true);
+  });
+  karte.querySelector(".hell").addEventListener("click", schliessen);
+  aufBuehne(fach, karte, false, true);
+  if (!ruhig) regen(ev.regen);
+}
+
+// Emojis regnen von oben über die ganze Bühne (hinter der Karte) – dauerhaft,
+// bis die Karte geschlossen wird (schliessen() stoppt den Regen).
+let regenUhr = null;
+function regen(zeichen) {
+  const liste = [].concat(zeichen);
+  function tropfen() {
+    const r = document.createElement("div");
+    r.className = "regen";
+    r.textContent = liste[Math.floor(Math.random() * liste.length)];
+    r.style.left = Math.random() * 100 + "vw";
+    r.style.fontSize = 20 + Math.random() * 26 + "px";
+    buehne.prepend(r);
+    const dreh = Math.random() * 540 - 270, wackel = Math.random() * 60 - 30;
+    r.animate([
+      { transform: "translate(0,-12vh) rotate(0)" },
+      { transform: "translate(" + wackel + "px,50vh) rotate(" + dreh / 2 + "deg)" },
+      { transform: "translate(" + -wackel + "px,112vh) rotate(" + dreh + "deg)" }
+    ], { duration: 3200 + Math.random() * 2600, easing: "linear" }).onfinish = () => r.remove();
+  }
+  stoppeRegen();
+  for (let i = 0; i < 18; i++) setTimeout(tropfen, i * 60);   // kräftiger Anfang
+  regenUhr = setInterval(tropfen, 170);                        // dann gleichmäßig weiter
+}
+function stoppeRegen() { clearInterval(regenUhr); regenUhr = null; }
+
+// Karte zeigen und aus dem Türchen in die Mitte fliegen lassen.
+// nachFoto: die Karte kommt direkt nach dem Foto, also nicht nochmal aus dem Türchen.
+function aufBuehne(fach, karte, mitFunken, nachFoto) {
+  clearTimeout(schliessUhr);
+  buehne.style.display = "block";
+  requestAnimationFrame(() => buehne.classList.add("an"));
+  buehne.setAttribute("aria-hidden", "false");
+
+  if (!ruhig && nachFoto) {
+    karte.animate([
+      { transform: "scale(.3) rotate(-12deg)", opacity: 0 },
+      { transform: "scale(1.06) rotate(2deg)", opacity: 1, offset: .7 },
+      { transform: "scale(1) rotate(0)" }
+    ], { duration: 650, easing: "cubic-bezier(.2,.8,.3,1)" }).onfinish = () => funken();
+  } else if (!ruhig) {
+    const von = fach.getBoundingClientRect();
+    const ziel = karte.getBoundingClientRect();
+    const dx = (von.left + von.width / 2) - (ziel.left + ziel.width / 2);
+    const dy = (von.top + von.height / 2) - (ziel.top + ziel.height / 2);
+    const s = Math.max(.08, von.width / ziel.width);
+    karte.animate([
+      { transform: "translate(" + dx + "px," + dy + "px) scale(" + s + ") rotate(-25deg)", opacity: .3 },
+      { transform: "translate(" + dx * .4 + "px," + (dy * .4 - 60) + "px) scale(.7) rotate(8deg)", opacity: 1, offset: .55 },
+      { transform: "translate(0,0) scale(1.06) rotate(-2deg)", offset: .85 },
+      { transform: "translate(0,0) scale(1) rotate(0)" }
+    ], { duration: 1000, easing: "cubic-bezier(.2,.8,.3,1)" }).onfinish = () => { if (mitFunken) funken(); };
+  }
+  (karte.querySelector(".weiter") || karte.querySelector("button")).focus({ preventScroll: true });
+  buehne.onclick = e => { if (e.target === buehne) schliessen(); };
+  document.onkeydown = e => { if (e.key === "Escape") schliessen(); };
+}
+
+let schliessUhr;
+function schliessen() {
+  stoppeRegen();
+  buehne.classList.remove("an");
+  buehne.setAttribute("aria-hidden", "true");
+  document.onkeydown = null;
+  schliessUhr = setTimeout(() => { buehne.style.display = "none"; buehne.innerHTML = ""; }, 300);
+}
+
+function funken() {
+  const farben = ["#e8c26a", "#fff1c4", "#c4262e", "#ffffff", "#2f8a5b"];
+  const mx = innerWidth / 2, my = innerHeight / 2;
+  for (let i = 0; i < 46; i++) {
+    const f = document.createElement("div");
+    f.className = "funke";
+    f.style.background = farben[i % farben.length];
+    if (i % 3 === 0) f.style.borderRadius = "50%";
+    if (i % 4 === 1) { f.style.width = "6px"; f.style.height = "14px"; }
+    f.style.left = mx + "px"; f.style.top = my + "px";
+    buehne.prepend(f);
+    const w = Math.random() * Math.PI * 2, r = 140 + Math.random() * 220;
+    f.animate([
+      { transform: "translate(-50%,-50%) rotate(0)", opacity: 1 },
+      { transform: "translate(" + Math.cos(w) * r + "px," + (Math.sin(w) * r + 160) + "px) rotate(" + (Math.random() * 720) + "deg)", opacity: 0 }
+    ], { duration: 1200 + Math.random() * 700, easing: "cubic-bezier(.1,.7,.4,1)" }).onfinish = () => f.remove();
+  }
+}
+
+let toastUhr;
+function melde(text) {
+  toast.textContent = text;
+  toast.classList.add("zeigen");
+  clearTimeout(toastUhr);
+  toastUhr = setTimeout(() => toast.classList.remove("zeigen"), 2600);
+}
+
+// Adventskranz: Kerzen brennen nach den Adventssonntagen 2026 (29.11., 6./13./20.12.)
+(function () {
+  const m = jetzt.getMonth(), d = jetzt.getDate();
+  let an, text;
+  if (TESTMODUS) { an = 4; text = "Vorschau: alle vier Kerzen brennen"; }
+  else if (heute) { an = 1 + (heute >= 6) + (heute >= 13) + (heute >= 20); text = an + ". Advent"; }
+  else if (m === 11 || vorbei) { an = 4; text = "Frohe Weihnachten!"; }
+  else if (m === 10 && d >= 29) { an = 1; text = "1. Advent"; }
+  else {
+    an = 0;
+    const tage = Math.ceil((new Date(jetzt.getFullYear(), 10, 29) - jetzt) / 864e5);
+    text = "Noch " + tage + " Tage bis zum 1. Advent";
+  }
+  document.querySelectorAll(".kerze").forEach((k, i) => k.classList.toggle("an", i < an));
+  document.querySelector(".kranz-bild").style.setProperty("--glut", an / 4);
+
+  // Familie als Namensschilder, wer heute dran ist, leuchtet
+  document.getElementById("familie").innerHTML = FAMILIE.map(n =>
+    '<span class="name' + (heute && wer(heute) === n ? " heute" : "") + '"><b>' + n[0] + '</b>' + n + '</span>').join("");
+  document.getElementById("kranzText").textContent = text;
+})();
+
+// Sternenhimmel und Sternschnuppe
+(function () {
+  const himmel = document.getElementById("himmel");
+  for (let i = 0; i < 55; i++) {
+    const s = document.createElement("div");
+    s.className = "stern";
+    const g = .8 + Math.random() * 1.8;
+    s.style.width = s.style.height = g + "px";
+    s.style.left = Math.random() * 100 + "%";
+    s.style.top = Math.random() * 62 + "%";
+    s.style.opacity = .4 + Math.random() * .6;
+    s.style.animationDelay = -Math.random() * 3 + "s";
+    s.style.animationDuration = 2 + Math.random() * 3 + "s";
+    himmel.appendChild(s);
+  }
+  const schnuppe = himmel.querySelector(".sternschnuppe");
+  const neu = () => { schnuppe.style.left = 5 + Math.random() * 55 + "%"; schnuppe.style.top = 4 + Math.random() * 28 + "%"; };
+  neu();
+  schnuppe.addEventListener("animationiteration", neu);
+})();
+
+// Glitzer, wo man hintippt
+if (!ruhig) addEventListener("pointerdown", ev => {
+  for (let i = 0; i < 7; i++) {
+    const g = document.createElement("span");
+    g.className = "glitzer"; g.textContent = i % 2 ? "✦" : "·";
+    g.style.left = ev.clientX + "px"; g.style.top = ev.clientY + "px";
+    document.body.appendChild(g);
+    const w = Math.random() * Math.PI * 2, r = 22 + Math.random() * 30;
+    g.animate([
+      { transform: "translate(-50%,-50%) scale(.4)", opacity: 1 },
+      { transform: "translate(calc(-50% + " + Math.cos(w) * r + "px), calc(-50% + " + Math.sin(w) * r + "px)) scale(1.1) rotate(90deg)", opacity: 0 }
+    ], { duration: 650 + Math.random() * 300, easing: "cubic-bezier(.2,.7,.4,1)" }).onfinish = () => g.remove();
+  }
+}, { passive: true });
+
+// Lichterkette: Bögen über die ganze Breite, Birnen hängen am Draht
+(function () {
+  const el = document.getElementById("lichterkette");
+  const boegen = innerWidth < 560 ? 3 : 5, A = 24, oben = 4, proBogen = 5;
+  const farben = ["#ff4b4b", "#ffd25a", "#4be37a", "#5ab4ff", "#ff8af0"];
+  let d = "M0 " + oben;
+  for (let b = 0; b < boegen; b++) {
+    const x0 = b * 100 / boegen, x1 = (b + 1) * 100 / boegen;
+    d += " Q" + (x0 + x1) / 2 + " " + (oben + 2 * A) + " " + x1 + " " + oben;
+  }
+  el.innerHTML = '<svg viewBox="0 0 100 60" preserveAspectRatio="none"><path d="' + d +
+    '" fill="none" stroke="#2a2f3a" stroke-width="1.6" vector-effect="non-scaling-stroke"/></svg>';
+  let n = 0;
+  for (let b = 0; b < boegen; b++) {
+    for (let j = 0; j < proBogen; j++) {
+      const t = (j + .5) / proBogen;
+      const x = (b + t) * 100 / boegen, y = oben + 4 * A * t * (1 - t);
+      const s = document.createElement("span");
+      s.className = "birne";
+      s.style.left = x + "%"; s.style.top = (y + 2) + "px";
+      s.style.setProperty("--c", farben[n++ % farben.length]);
+      s.style.transform = "rotate(" + ((t - .5) * -40) + "deg)";
+      s.style.animationDelay = -Math.random() * 3 + "s";
+      s.style.animationDuration = 1.8 + Math.random() * 1.6 + "s";
+      el.appendChild(s);
+    }
+  }
+})();
+
+// Schneeflocken
+if (!ruhig) {
+  const schnee = document.getElementById("schnee");
+  for (let i = 0; i < 60; i++) {
+    const f = document.createElement("div");
+    f.className = "flocke";
+    const g = 2 + Math.random() * 4;
+    f.style.width = f.style.height = g + "px";
+    f.style.left = Math.random() * 100 + "vw";
+    f.style.opacity = .35 + Math.random() * .55;
+    f.style.setProperty("--drift", (Math.random() * 80 - 40) + "px");
+    f.style.animationDuration = 8 + Math.random() * 10 + "s";
+    f.style.animationDelay = -Math.random() * 18 + "s";
+    schnee.appendChild(f);
+  }
+  // ein paar große, unscharfe Flocken ganz vorne
+  for (let i = 0; i < 9; i++) {
+    const f = document.createElement("div");
+    f.className = "flocke vorn"; f.textContent = "❄";
+    f.style.fontSize = 14 + Math.random() * 14 + "px";
+    f.style.left = Math.random() * 100 + "vw";
+    f.style.opacity = .35 + Math.random() * .3;
+    f.style.setProperty("--drift", (Math.random() * 120 - 60) + "px");
+    f.style.animationDuration = 7 + Math.random() * 6 + "s";
+    f.style.animationDelay = -Math.random() * 13 + "s";
+    schnee.appendChild(f);
+  }
+}
+</script>
+</body>
+</html>
