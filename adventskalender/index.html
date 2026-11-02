@@ -1024,11 +1024,14 @@ async function kugelPruefen(code) {
 }
 
 const fotoCache = {};
+let falscherSchluessel = false;   // Datei kam an, ließ sich aber nicht entschlüsseln
 function fotoUrl(datei, typ = "image/jpeg") {
   if (!schluessel) return Promise.resolve(null);
   if (!fotoCache[datei]) fotoCache[datei] = (async () => {
     const d = new Uint8Array(await (await fetch(datei)).arrayBuffer());
-    const klar = await crypto.subtle.decrypt({ name: "AES-GCM", iv: d.slice(0, 12) }, schluessel, d.slice(12));
+    let klar;
+    try { klar = await crypto.subtle.decrypt({ name: "AES-GCM", iv: d.slice(0, 12) }, schluessel, d.slice(12)); }
+    catch (e) { falscherSchluessel = true; throw e; }
     return URL.createObjectURL(new Blob([klar], { type: typ }));
   })().catch(() => { delete fotoCache[datei]; return null; });   // beim nächsten Mal neu versuchen
   return fotoCache[datei];
@@ -1046,11 +1049,21 @@ async function start() {
       }
     } catch (e) {}
   }
+  let ausSpeicher = false;
   if (!schluessel) {
     try {
       const s = localStorage.getItem(SPEICHER + "-s");
-      if (s) schluessel = await crypto.subtle.importKey("raw", vonB64(s), "AES-GCM", false, ["decrypt"]);
+      if (s) { schluessel = await crypto.subtle.importKey("raw", vonB64(s), "AES-GCM", false, ["decrypt"]); ausSpeicher = true; }
     } catch (e) {}
+  }
+  // Gemerkter Schlüssel passt nicht mehr (Fotos neu verschlüsselt): wegwerfen,
+  // sonst kommt bei jedem Bild "Konnte nicht geladen werden".
+  if (ausSpeicher && !(await fotoUrl("familie.bin")) && falscherSchluessel) {
+    schluessel = null;
+    try { localStorage.removeItem(SPEICHER + "-s"); } catch (e) {}
+    hinweisSetzen();
+    hinweis.insertAdjacentHTML("beforeend", " <b>Bitte die Kugel neu scannen</b> – die Fotos wurden erneuert.");
+    return;
   }
   hinweisSetzen();
   try {
