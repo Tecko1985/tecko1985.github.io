@@ -11,3 +11,23 @@ adventskalender/**/*.heic
 adventskalender/**/*.mp4
 adventskalender/**/*.mov
 adventskalender/**/*.webm
+adventskalender/**/*.gif
+adventskalender/**/*.m4v
+adventskalender/**/*.avif
+adventskalender/**/*.heif
+adventskalender/**/*.3gp
+adventskalender/**/*.tif
+adventskalender/**/*.tiff
+adventskalender/**/*.bmp
+adventskalender/**/*.dng
+adventskalender/**/*.json
+adventskalender/**/*.txt
+adventskalender/**/*.py
+adventskalender/**/*.zip
+
+# Zusätzlich Positivliste: im Ordner wird nur ausgeliefert, was die Seite braucht
+# (index.html + verschlüsselte .bin). Alles andere (Originale, geheim.json,
+# QR-Druckblatt, Zuordnung.txt …) bleibt lokal, egal welche Endung.
+adventskalender/*
+!adventskalender/index.html
+!adventskalender/*.bin
