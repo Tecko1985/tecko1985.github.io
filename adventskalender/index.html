@@ -1025,10 +1025,20 @@ async function kugelPruefen(code) {
 
 const fotoCache = {};
 let falscherSchluessel = false;   // Datei kam an, ließ sich aber nicht entschlüsseln
+let keineVerbindung = false;      // statt der Datei kam nichts / eine Fehler- oder WLAN-Anmeldeseite
 function fotoUrl(datei, typ = "image/jpeg") {
   if (!schluessel) return Promise.resolve(null);
   if (!fotoCache[datei]) fotoCache[datei] = (async () => {
-    const d = new Uint8Array(await (await fetch(datei)).arrayBuffer());
+    let r;
+    try { r = await fetch(datei); } catch (e) { keineVerbindung = true; throw e; }
+    // Nur eine echte .bin darf den Schlüssel in Verdacht bringen: 404-Seite,
+    // WLAN-Anmeldeseite (200 + HTML) oder Abbruch sind kein falscher Schlüssel.
+    const art = (r.headers.get("content-type") || "").toLowerCase();
+    if (!r.ok || art.startsWith("text/")) { keineVerbindung = true; throw new Error("keine Datei"); }
+    let d;
+    try { d = new Uint8Array(await r.arrayBuffer()); } catch (e) { keineVerbindung = true; throw e; }
+    const anfang = new TextDecoder().decode(d.slice(0, 512)).toLowerCase();
+    if (d.length < 29 || (/^\s*</.test(anfang) && anfang.includes("html"))) { keineVerbindung = true; throw new Error("keine Datei"); }
     let klar;
     try { klar = await crypto.subtle.decrypt({ name: "AES-GCM", iv: d.slice(0, 12) }, schluessel, d.slice(12)); }
     catch (e) { falscherSchluessel = true; throw e; }
@@ -1072,6 +1082,8 @@ async function start() {
   } catch (e) {}
   const url = await fotoUrl("familie.bin");
   if (url) foto.src = url;
+  else if (keineVerbindung && schluessel)
+    hinweis.insertAdjacentHTML("beforeend", " <b>Fotos gerade nicht erreichbar</b> – keine Verbindung? Später neu laden.");
 }
 
 function hinweisSetzen() {
