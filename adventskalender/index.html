@@ -801,7 +801,8 @@ if (!Element.prototype.replaceChildren) Element.prototype.replaceChildren = func
   this.textContent = "";
   for (let i = 0; i < arguments.length; i++) this.append(arguments[i]);
 };
-const TESTMODUS = true;
+// Testmodus bis einschliesslich 30.11.2026, ab dem 1.12. von allein aus (Michel 09.11.2026).
+const TESTMODUS = Date.now() < new Date(2026, 11, 1).getTime();
 
 // ── Gewinne ─────────────────────────────────────────────────
 // An Gutschein-Tagen (EVENTS unten) ist der Gutschein der Gewinn, am 24. das Finale.
@@ -947,7 +948,8 @@ let schluessel = null;     // Foto-Schlüssel (CryptoKey)
 // Welches Türchen ist heute dran? Am 1.–24. Dezember das Datum.
 // Zum Ausprobieren vorher: ?k=…&tag=5 tut so, als wäre der 5. Dezember.
 const jetzt = new Date();
-const testTag = /^\d{1,2}$/.test(params.get("tag") || "") ? +params.get("tag") : null;
+// ?tag= nur im Testmodus -- sonst oeffnete ?tag=24 im Dezember alle Tuerchen vorab (Verdacht 01.11.).
+const testTag = TESTMODUS && /^\d{1,2}$/.test(params.get("tag") || "") ? +params.get("tag") : null;
 const echterTag = jetzt.getMonth() === 11 && jetzt.getDate() <= 24 ? jetzt.getDate() : null;
 const heute = testTag >= 1 && testTag <= 24 ? testTag : echterTag;
 // Der Kalender gilt fuer Dezember 2026; ab dem 25.12.2026 bleibt alles offen – auch im neuen Jahr (Gutscheine gelten jederzeit)
