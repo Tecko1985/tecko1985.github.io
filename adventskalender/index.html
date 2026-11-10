@@ -982,8 +982,8 @@ REIHENFOLGE.forEach((tag, i) => {
       '<span class="vorne"><span class="zahl">' + tag + '</span></span>' +
       '<span class="hinten"></span>' +
     '</button>';
-  // Schon geöffnete Türchen bleiben offen (auch nach Neuladen), im Dezember dazu alle vergangenen Tage.
-  if (geoeffnet[tag] || (!TESTMODUS && ((heute && tag < heute) || nachHeiligabend))) fach.classList.add("offen");
+  // Schon geöffnete Türchen bleiben offen (auch nach Neuladen), nach Heiligabend alle.
+  if (geoeffnet[tag] || (!TESTMODUS && nachHeiligabend)) fach.classList.add("offen");
   // Klick aufs ganze Fach: geschlossen über die Tür, offen auf das Innere.
   fach.addEventListener("click", () => tippen(fach, tag));
   raster.appendChild(fach);
@@ -1088,35 +1088,36 @@ async function start() {
     hinweis.insertAdjacentHTML("beforeend", " <b>Fotos gerade nicht erreichbar</b> – keine Verbindung? Später neu laden.");
 }
 
+// Kugel N gehört zu Türchen N: nach dem Scan blinkt genau dieses Türchen.
 function hinweisSetzen() {
-const heuteFach = heute && raster.querySelector('[data-tag="' + heute + '"]');
-const tagDerKugel = kugel && Object.keys(geoeffnet).map(Number).find(t => geoeffnet[t] === kugel.nr);
+const kugelFach = kugel && raster.querySelector('[data-tag="' + kugel.nr + '"]');
+const kugelOffen = kugelFach && kugelFach.classList.contains("offen");
 if (TESTMODUS) {
-  hinweis.innerHTML = "<b>Testmodus:</b> Jedes Türchen lässt sich öffnen." + (kCode && !kugel ? " (Kugel unbekannt)" : "") +
+  hinweis.innerHTML = "<b>Testmodus:</b> " +
+    (kugel ? "Kugel <b>" + kugel.nr + "</b> → Türchen <b>" + kugel.nr + "</b> blinkt. Alle anderen gehen auch auf."
+           : "Jedes Türchen lässt sich öffnen." + (kCode ? " (Kugel unbekannt)" : "")) +
     ' <button type="button" class="zuruecksetzen">alle schließen</button>';
   hinweis.querySelector(".zuruecksetzen").onclick = () => {
     geoeffnet = {}; merken();
     try { localStorage.removeItem(EINGELOEST); } catch (e) {}
     location.reload();
   };
-} else if (!kCode && heute && !geoeffnet[heute]) {
-  hinweis.innerHTML = "Heute ist <b>" + wer(heute) + "</b> dran – zieh eine Kugel und scanne sie!";
+  if (kugelFach && !kugelOffen) kugelFach.classList.add("dran");
 } else if (kCode && !kugel) {
   hinweis.textContent = "Diese Kugel kenne ich nicht. Bitte nochmal scannen.";
-} else if (tagDerKugel) {
-  hinweis.innerHTML = "Diese Kugel gehört zu Türchen <b>" + tagDerKugel + "</b> – tipp es an!";
-  raster.querySelector('[data-tag="' + tagDerKugel + '"]').classList.add("dran");
 } else if (vorDezember) {
   const bis = Math.ceil((new Date(jetzt.getFullYear(), 11, 1) - jetzt) / 864e5);
   hinweis.innerHTML = "Noch <b>" + bis + " Tage</b> bis zum 1. Dezember. Dann darf <b>Ben</b> anfangen!";
-} else if (!heute) {
-  hinweis.textContent = "Frohe Weihnachten! Der Kalender ist vorbei.";
-} else if (geoeffnet[heute]) {
-  hinweis.innerHTML = "Türchen <b>" + heute + "</b> ist heute schon offen. " +
-    (heute < 24 ? "Morgen ist <b>" + wer(heute + 1) + "</b> dran." : "Frohe Weihnachten!");
+} else if (kugel && kugelOffen) {
+  hinweis.innerHTML = "Türchen <b>" + kugel.nr + "</b> ist schon offen – tipp es an, um es nochmal zu sehen.";
+  kugelFach.classList.add("dran");
+} else if (kugel) {
+  hinweis.innerHTML = "Kugel <b>" + kugel.nr + "</b>: dein Türchen ist die <b>" + kugel.nr + "</b> – tipp es an!";
+  kugelFach.classList.add("dran");
+} else if (heute) {
+  hinweis.innerHTML = "Heute ist <b>" + wer(heute) + "</b> dran – zieh eine Kugel und scanne sie!";
 } else {
-  hinweis.innerHTML = "<b>" + wer(heute) + "</b>, dein Türchen ist die <b>" + heute + "</b> – tipp es an!";
-  heuteFach.classList.add("dran");
+  hinweis.textContent = "Frohe Weihnachten! Der Kalender ist vorbei.";
 }
 const blinkt = raster.querySelector(".dran");
 if (blinkt) setTimeout(() => blinkt.scrollIntoView({ behavior: ruhig ? "auto" : "smooth", block: "center" }), 400);
@@ -1134,8 +1135,8 @@ function tippen(fach, tag) {
   }
   if (!TESTMODUS && !fach.classList.contains("dran")) {
     fach.classList.remove("wackeln"); void fach.offsetWidth; fach.classList.add("wackeln");
-    melde(heute && tag > heute ? "Erst am " + tag + ". Dezember – dann ist " + wer(tag) + " dran."
-          : kugel ? "Das ist heute nicht dran." : "Erst eine Kugel ziehen und scannen.");
+    melde(vorDezember ? "Erst ab dem 1. Dezember."
+          : kugel ? "Deine Kugel gehört zu Türchen " + kugel.nr + "." : "Erst eine Kugel ziehen und scannen.");
     return;
   }
   fach.classList.remove("dran");
