@@ -801,8 +801,9 @@ if (!Element.prototype.replaceChildren) Element.prototype.replaceChildren = func
   this.textContent = "";
   for (let i = 0; i < arguments.length; i++) this.append(arguments[i]);
 };
-// Testmodus bis einschliesslich 30.11.2026, ab dem 1.12. von allein aus (Michel 09.11.2026).
-const TESTMODUS = Date.now() < new Date(2026, 11, 1).getTime();
+// Testmodus bis einschliesslich 14.11.2026, ab dem 15.11. 0 Uhr scharf (Michel 10.11.2026).
+// Danach bis 30.11. nur Countdown, ab 1.12. geht das Türchen des Tages auf.
+const TESTMODUS = Date.now() < new Date(2026, 10, 15).getTime();
 
 // ── Gewinne ─────────────────────────────────────────────────
 // An Gutschein-Tagen (EVENTS unten) ist der Gutschein der Gewinn, am 24. das Finale.
@@ -1140,7 +1141,7 @@ function tippen(fach, tag) {
   }
   if (!TESTMODUS && !fach.classList.contains("dran")) {
     fach.classList.remove("wackeln"); void fach.offsetWidth; fach.classList.add("wackeln");
-    melde(heute && tag > heute ? "Erst am " + tag + ". Dezember – dann ist " + wer(tag) + " dran."
+    melde(vorDezember ? "Erst ab dem 1. Dezember – dann ist Ben dran." : heute && tag > heute ? "Erst am " + tag + ". Dezember – dann ist " + wer(tag) + " dran."
           : kugel ? "Das ist heute nicht dran." : "Erst eine Kugel ziehen und scannen.");
     return;
   }
